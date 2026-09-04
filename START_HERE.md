@@ -2,13 +2,13 @@
 
 ## What this project is
 
-A custom differential-drive robot at the beginning of a planned path toward ROS 2-based mapping, localization, and navigation.
+A custom differential-drive robot at the beginning of a planned path toward ROS 2-based autonomous indoor mapping. The final behavior is to create and save a fresh map of a zone after the robot is placed there and turned on; saved-map navigation is out of scope.
 
 ## What exists now
 
-One PlatformIO/Arduino firmware program in `src/main.cpp` targets an ESP32 development module. It reads `w`, `s`, `a`, `d`, and `x` from a 115200-baud serial connection and sets two PWM/direction motor channels. `pio run` passed on 2026-09-01.
+One PlatformIO/Arduino firmware program in `src/main.cpp` targets an ESP32 development module. It reads `w`, `s`, `a`, `d`, and `x` from a 115200-baud serial connection and drives two BTS7960 modules through separate forward/reverse PWM inputs. It also counts the connected encoder A channels and reports both counts for `e`. The motion command timeout is 1000 ms. The previous `pio run` pass on 2026-09-01 was before this firmware change; the local PlatformIO command is currently unavailable, so this revision has not been built here.
 
-That proves the firmware compiles. It does **not** prove that a board was flashed, motors moved correctly, the pinout matches the robot, or stopping is safe. There are no automated tests or hardware result records yet. No ROS 2 workspace exists.
+The prior build result does **not** prove that this revision compiles, that a board was flashed, motors moved correctly, the pinout matches the robot, or stopping is safe. There are no automated tests or hardware result records yet. No ROS 2 workspace exists.
 
 ## Current work
 
@@ -40,4 +40,3 @@ pio device monitor
 ```
 
 Use `w`, `s`, `a`, `d`, or `x` as documented in [docs/interfaces.md](docs/interfaces.md). The current firmware latches motion indefinitely and has no timeout, so keep independent power removal within reach. There are no ROS build/run commands yet.
-

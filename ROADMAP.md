@@ -1,33 +1,101 @@
-# Capability roadmap
+# Autonomous mapping robot roadmap
 
-Status is evidence-based. Code that compiles is not considered hardware-complete; physical acceptance requires a dated record under `results/`.
+**Last updated:** 2026-09-04
+**Current stage:** Safe motor-driver bring-up
 
-| Milestone | Status | Current evidence | Acceptance gate |
-|---|---|---|---|
-| 0. Repository and platform foundation | **In progress** | PlatformIO project builds; source-of-truth docs, plan structure, and a preliminary reported-hardware parts list exist; exact variants remain incomplete | Repeatable setup/build instructions, baseline automated checks, known hardware recorded, and docs match repository |
-| 1. Motor and encoder hardware | **In progress** | Open-loop ESP32 PWM/direction command sketch exists; builder-reported drivetrain parts are recorded but unverified | Safe boot/timeout behavior, pinout and power path recorded, both wheels pass direction/stop tests, encoders produce measured counts |
-| 2. Wheel velocity control and odometry | **Not started** | No encoders, kinematics, controller, or tests | Calibrated wheel geometry; tested velocity loops; measured straight/rotation behavior; odometry interface and drift results |
-| 3. IMU and state estimation | **Not started** | No device or code | Mounting/calibration recorded; orientation verified; selected standard filter produces validated fused estimate |
-| 4. ROS 2 platform integration and robot model | **Not started** | No ROS workspace | Build/test-clean ROS packages, hardware bridge, URDF, coherent TF tree, launch/config validation |
-| 5. LiDAR integration | **Not started** | No device or code | Stable scan publication, mounting transform, alignment and obstruction tests recorded |
-| 6. SLAM | **Not started** | No ROS or sensor pipeline | Repeatable map creation with recorded bag/run and documented map-quality assessment |
-| 7. Localization | **Not started** | No saved maps or localization config | Repeatable pose convergence/recovery in a saved map with measured results |
-| 8. Nav2 navigation | **Not started** | No Nav2 config | Repeated goal completion, obstacle handling, recovery, and safe stopping meet defined thresholds |
-| 9. Autonomous exploration | **Not started** | No mission behavior | Bounded-area exploration meets coverage and return behavior criteria |
-| 10. Coverage planning | **Not started** | No requirements or planner | Coverage metric, exclusions, path execution, and repeatability criteria defined and met |
-| 11. Docking and charging | **Not started** | Mentioned only as a possible future capability | Requirements, electrical safety, detection/alignment, repeated docking and charge-transition results |
-| 12. Vacuum subsystem | **Not started** | No repository evidence or requirements | Scope, hardware ownership, safety, controls, and performance criteria first defined, then validated |
-| 13. Full-system validation | **Not started** | Subsystems unavailable | Endurance, fault response, navigation mission, logs, and regression evidence meet an approved test plan |
+The only product goal is a two-wheel differential-drive robot that can be placed in
+an unknown indoor zone, turned on, autonomously explore it, and save a fresh map with
+SLAM Toolbox. The project will not use an IMU. The drivetrain will be completed and
+tested independently before Raspberry Pi, LiDAR, and ROS integration. Loading old
+maps or navigating to user-selected goals is outside this roadmap.
 
-## Current milestone
+## Build order
 
-**Milestone 1 — motor and encoder hardware**, narrowed to safe motor-command bring-up. The immediate plan is [001-safe-motor-command-interface.md](docs/plans/active/001-safe-motor-command-interface.md). Encoder work follows only after motor actuation can be commanded and stopped predictably.
+1. **Finish and verify the physical drivetrain** — Install both BTS7960 drivers,
+   encoders, level shifter, power distribution, fuse, and accessible motor-power
+   disconnect. Confirm every rail and signal with motor power off before testing.
 
-## Progress rules
+2. **Prove simple keyboard driving** — Use a small ESP32 bring-up program to accept
+   keyboard commands for forward, reverse, left, right, and stop. Verify boot-stop,
+   command timeout, individual wheel direction, turning, and stopping first with the
+   wheels raised and then at low speed on the floor. The existing firmware is only a
+   preliminary unbuilt draft until these tests are recorded.
 
-- **Completed:** every milestone acceptance gate has evidence; hardware gates link to physical results.
-- **In progress:** bounded work or partial evidence exists, but at least one gate remains unmet.
-- **Not started:** no accepted implementation/evidence exists, even if the feature appears in design intent.
-- **Blocked:** use only when a named dependency prevents meaningful work; record that dependency in the active plan.
+3. **Validate encoder feedback** — Read both quadrature encoders on the ESP32,
+   measure counts per wheel revolution, determine the correct sign in both
+   directions, and calculate wheel speed in rad/s at a fixed update rate. Do not begin
+   PID tuning until the counts and speed measurements are reliable.
 
-Milestone status changes must update this file and the relevant execution plan. Do not advance a milestone based solely on code presence, a successful compile, or an unrecorded manual observation.
+4. **Implement and test wheel-speed PID** — Run one local controller per wheel on the
+   ESP32. Each controller compares a target wheel speed with encoder-measured speed
+   and adjusts BTS7960 PWM. Add output limits, integral anti-windup, safe direction
+   changes, and command-loss behavior. Record straight-drive, reverse, and turn tests.
+
+5. **Add the ROS-ready ESP32 command interface** — After PID passes, replace the
+   temporary keyboard command format with a versioned serial interface for left/right
+   wheel-speed targets, encoder state, measured wheel speeds, timestamps, and faults.
+   Test it first with a small computer-side test program; full ROS is not required for
+   that protocol test. The ESP32 keeps PID and immediate stopping locally.
+
+6. **Begin ROS setup and bridge the drivetrain** — Install the Raspberry Pi, its
+   regulated supply, storage/cooling, and ROS 2 Jazzy. Normally a Raspberry Pi ROS
+   node or `ros2_control` hardware interface subscribes to `/cmd_vel`, converts the
+   requested linear/angular motion into wheel-speed targets, and sends those targets
+   over serial. The ESP32 does not need to subscribe directly to ROS topics unless a
+   deliberate micro-ROS design is chosen. Verify ROS keyboard teleoperation and wheel
+   feedback before adding mapping.
+
+7. **Integrate wheel odometry, LiDAR, and TF** — Install the 2D LiDAR; publish wheel
+   odometry and laser scans with correct units, timestamps, and frames. Calibrate
+   loaded wheel radius and track width, then verify one coherent
+   `odom -> base_link -> laser` TF tree. No IMU or IMU fusion is planned.
+
+8. **Run autonomous mapping** — Configure SLAM Toolbox, map saving, and a
+   frontier-exploration component. SLAM builds the map; exploration selects reachable
+   unknown regions; a minimal Nav2 configuration executes those exploration goals
+   safely. The mapping run starts after sensor/TF health checks, stops when no useful
+   frontiers remain or a safety condition occurs, and saves the map, configuration,
+   and run artifacts.
+
+9. **Validate and present the project** — Record autonomous mapping trials across
+   three indoor environments. Commit the maps, configurations, test results, wiring
+   diagram, bill of materials, setup guide, and a short demo video so every
+   completed-project claim is supported by GitHub evidence.
+
+## Acceptance checkpoints
+
+- **Motors ready:** both wheels pass boot, direction, stop, and timeout bench tests.
+- **Hardware ready:** all installed parts and power rails are identified and verified.
+- **PID ready:** both wheels track commanded speeds and the robot drives and turns repeatably.
+- **ROS ready:** the workspace builds/tests and ROS teleoperation reports valid wheel state.
+- **Sensors ready:** wheel odometry, LiDAR, and TF run without timestamp or frame errors.
+- **Autonomous mapping ready:** two autonomous runs produce consistent maps of the same environment and end with the robot stopped and a saved map.
+- **Portfolio ready:** documented autonomous-mapping trials cover three environments.
+
+## Reference implementations for future stages
+
+These are design references, not drop-in code. Match interfaces, safety behavior,
+and measured hardware values to this robot before reusing an idea.
+
+- [NavBot hardware](https://github.com/vinay-lanka/navbot_hardware): reference for
+  a similar differential-drive base with two encoder-feedback wheel PID controllers.
+  Use it during encoder bring-up and local wheel-speed PID work.
+- [Ben May's SLAMbot project](https://www.benmay.co.uk/portfolio-slambot-real):
+  reference for the later ROS/SLAM project structure and integration direction.
+  Use it after the independently tested drivetrain is ready for ROS hardware.
+
+## Aggressive schedule at 25 focused hours per week
+
+| Week | Target |
+|---:|---|
+| 1 | Complete wiring and verify safe keyboard-controlled drivetrain |
+| 2 | Encoder acquisition, wheel-speed PID, and measured drive tests |
+| 3 | ROS-ready ESP32 serial protocol, then Pi and ROS 2 setup |
+| 4 | ROS bridge, robot model, and wheel odometry |
+| 5 | LiDAR integration, calibrated TF, and first map |
+| 6 | Repeatable autonomous mapping with automatic map saving |
+| 7+ | Tuning and autonomous-mapping validation across three environments |
+
+Status is evidence-based. Code compilation is not hardware validation. Record physical
+tests under [`results/`](results/) and keep the active execution plan under
+[`docs/plans/active/`](docs/plans/active/).

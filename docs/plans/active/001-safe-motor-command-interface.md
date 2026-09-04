@@ -12,14 +12,14 @@ Make the existing ESP32 open-loop motor command path deterministic, fail-safe on
 
 ## Current State
 
-`src/main.cpp` reads one serial byte and directly selects fixed left/right PWM and direction. `w`, `s`, `a`, `d`, and `x` are recognized; other bytes leave outputs unchanged. Motion has no timeout. Pin polarity, driver behavior, and physical wheel motion have no repository evidence.
+`src/main.cpp` uses GPIO 25/26 and 32/33 as BTS7960 `RPWM`/`LPWM` pairs, GPIO 27 as the shared driver enable, and GPIO 34/35/36/39 for encoder inputs. `w`, `s`, `a`, `d`, `x`, and `e` are recognized; unknown bytes stop output, and a 1000 ms timeout stops motion. This code has not been built after the change because PlatformIO is unavailable on the current computer. Pin polarity, driver behavior, encoder behavior, and physical wheel motion have no repository evidence.
 
 `pio run` passed on 2026-09-01. No automated tests exist. The current interface is documented in `docs/interfaces.md`.
 
 ## Inputs
 
 - Existing firmware and `platformio.ini`.
-- Reported Cytron MDD10A motor driver; confirm the exact board revision/datasheet, actual wiring, motor supply limits, and whether zero duty coasts or brakes.
+- Two reported-purchased HiLetgo BTS7960 single-channel motor-driver modules; confirm arrival, exact board revision/datasheet, actual wiring, motor supply limits, logic levels, and whether zero duty coasts or brakes. The reported Cytron MDD10A is damaged and is not a test candidate.
 - A chosen command timeout based on expected command/update rate; currently `TBD`.
 - Bench equipment and a means to remove motor power independently.
 
@@ -94,6 +94,9 @@ With wheels unloaded, a current-limited motor supply, and independent power remo
 
 - 2026-09-01 — Repository audited; firmware build passed; plan created. No feature implementation or hardware verification performed.
 - 2026-09-01 — Builder reported a Cytron MDD10A, two expected 12 V 131:1 encoder gearmotors, a Tattu LiPo, Pololu wheels, an ESP32, and a printed chassis. Exact variants and electrical/mechanical details remain unverified; see the [parts list](../../../hardware/parts-list.md).
+- 2026-09-03 — Builder reported purchasing two HiLetgo BTS7960 motor drivers to replace the damaged Cytron, and reported a four-channel level shifter on hand for possible encoder signal conditioning. Neither part has been electrically verified.
+- 2026-09-03 — Firmware was rewritten for the planned BTS7960 and encoder GPIO map, including explicit stop-at-boot, unknown-input stop, and a 1000 ms command timeout. `pio run` could not be run because PlatformIO is not installed on the current computer. No hardware validation occurred.
+- 2026-09-04 — Added automatic raw left/right encoder-count reporting every 200 ms while a movement command is active. No hardware validation occurred.
 
 ## Decisions
 
@@ -103,7 +106,7 @@ With wheels unloaded, a current-limited motor supply, and independent power remo
 
 ## Problems / Blockers
 
-- The motor driver model is reported as Cytron MDD10A, but its exact revision, wiring, power limits, safe-state electrical behavior, and motor polarity are not recorded or verified.
+- The intended motor drivers are two reported-purchased HiLetgo BTS7960 modules, but their arrival, exact revision, wiring, power limits, safe-state electrical behavior, and motor polarity are not recorded or verified.
 - The command timeout value cannot be finalized until the expected command source/update rate is chosen.
 
 These block physical completion, but do not block drafting the state table or testable logic with explicitly provisional parameters.

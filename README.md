@@ -1,12 +1,12 @@
-# Autonomous Differential-Drive Mapping Robot
+# Autonomous Indoor Mapping Robot
 
-This repository contains the earliest firmware for a custom differential-drive robot intended to grow into a ROS 2 mapping and navigation platform.
+This repository contains the earliest firmware for a custom differential-drive robot that autonomously maps previously unknown indoor zones with ROS 2. The complete product behavior is simple: place the robot in a clear, bounded indoor zone, turn it on, let it explore and create a fresh map, then save that map. It does not need to reload maps, localize in old maps, accept user navigation goals, or reroute through prior maps.
 
 ## Project status
 
 The project is in the **motor-control bring-up** stage. The current ESP32 firmware accepts single-character commands over USB serial and drives left and right PWM/direction outputs. The firmware builds successfully, but the repository contains no recorded physical test results, so motor motion, wiring, direction, and stopping behavior are **not yet verified**.
 
-Encoders, IMU, LiDAR, an onboard ROS computer, ROS 2 packages, odometry, SLAM, localization, Nav2, exploration, docking, and a vacuum subsystem are not implemented in this repository.
+Encoder-based wheel-speed control, LiDAR, an onboard ROS computer, ROS 2 packages, odometry, SLAM, autonomous exploration, map saving, docking, and a vacuum subsystem are not implemented in this repository. An IMU is intentionally outside the current project plan.
 
 ## Current firmware behavior
 
@@ -20,7 +20,16 @@ This is open-loop bring-up code. It has no command timeout, encoder feedback, ve
 
 ## Intended architecture
 
-The intended design separates time-sensitive motor and encoder work on the ESP32 from higher-level sensing, state estimation, mapping, and navigation on a future ROS 2 computer. See [ARCHITECTURE.md](ARCHITECTURE.md) for implemented and planned component ownership.
+The intended design separates time-sensitive motor and encoder work on the ESP32 from higher-level sensing, state estimation, mapping, exploration, and map saving on a future ROS 2 computer. See [ARCHITECTURE.md](ARCHITECTURE.md) for implemented and planned component ownership.
+
+## Intended mapping run
+
+1. The operator places the robot in a clear, bounded indoor zone and turns on motor power.
+2. The robot performs startup checks, waits for valid wheel-odometry, LiDAR, and transform data, then begins a new SLAM map.
+3. An exploration component selects reachable unexplored areas; an internal motion controller drives to them while the ESP32 maintains safe wheel control.
+4. When no useful unexplored area remains, the robot stops and saves the map and run artifacts.
+
+The map is an output of the run. Loading an old map and navigating it is deliberately outside this project's scope.
 
 ## Build
 

@@ -52,7 +52,6 @@ Physical work must begin with a test-specific hazard review, stable supports whe
 | Straight drive | Commanded/measured distance, lateral error, duration, surface, battery condition, repeated trials |
 | Rotation | Commanded/measured angle, center displacement, repeated trials |
 | Odometry | Position/yaw error over named paths and time; raw and derived logs |
-| IMU | Mounting orientation, stationary bias/noise, axis/sign checks, rotation comparison |
 | LiDAR | Mount/alignment, scan orientation, obstruction, range sanity, stationary repeatability |
 | SLAM | Environment, bag/config/commit, loop closure, distortion, repeatability, map assessment |
 | Navigation | Goal set, success rate, path error, obstacle/recovery behavior, stopping clearance |
@@ -73,4 +72,3 @@ Every result must include:
 - anomalies and follow-up work.
 
 Unrecorded physical observations may guide investigation but do not advance the roadmap.
-
