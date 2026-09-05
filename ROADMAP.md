@@ -1,7 +1,7 @@
 # Autonomous mapping robot roadmap
 
 **Last updated:** 2026-09-04
-**Current stage:** Safe motor-driver bring-up
+**Current stage:** Initial wheel-speed PID tuning
 
 The only product goal is a two-wheel differential-drive robot that can be placed in
 an unknown indoor zone, turned on, autonomously explore it, and save a fresh map with

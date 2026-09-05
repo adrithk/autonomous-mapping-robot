@@ -12,7 +12,7 @@ Make the existing ESP32 open-loop motor command path deterministic, fail-safe on
 
 ## Current State
 
-`src/main.cpp` uses GPIO 25/26 and 32/33 as BTS7960 `RPWM`/`LPWM` pairs, GPIO 27 as the shared driver enable, and GPIO 34/35/36/39 for encoder inputs. `w`, `s`, `a`, `d`, `x`, and `e` are recognized; unknown bytes stop output, and a 1000 ms timeout stops motion. This code has not been built after the change because PlatformIO is unavailable on the current computer. Pin polarity, driver behavior, encoder behavior, and physical wheel motion have no repository evidence.
+`src/main.cpp` uses GPIO 25/26 and 32/33 as BTS7960 `RPWM`/`LPWM` pairs, GPIO 27 as the shared driver enable, and GPIO 34/35/36/39 for encoder inputs. `w`, `s`, `a`, `d`, `x`, and `e` are recognized; unknown bytes stop output. Straight and turn commands now set wheel-speed targets for the preliminary PID implementation. The controller test and PIOArduino firmware build passed on 2026-09-04. Pin polarity, driver behavior, controller stability, and physical stop behavior still require controlled validation.
 
 `pio run` passed on 2026-09-01. No automated tests exist. The current interface is documented in `docs/interfaces.md`.
 
@@ -97,6 +97,10 @@ With wheels unloaded, a current-limited motor supply, and independent power remo
 - 2026-09-03 — Builder reported purchasing two HiLetgo BTS7960 motor drivers to replace the damaged Cytron, and reported a four-channel level shifter on hand for possible encoder signal conditioning. Neither part has been electrically verified.
 - 2026-09-03 — Firmware was rewritten for the planned BTS7960 and encoder GPIO map, including explicit stop-at-boot, unknown-input stop, and a 1000 ms command timeout. `pio run` could not be run because PlatformIO is not installed on the current computer. No hardware validation occurred.
 - 2026-09-04 — Added automatic raw left/right encoder-count reporting every 200 ms while a movement command is active. No hardware validation occurred.
+- 2026-09-04 — Builder reported that the initial mapping produced right turn for `w`, left turn for `s`, forward for `a`, and reverse for `d`. The command signs were remapped accordingly; the corrected mapping still requires a controlled repeat test.
+- 2026-09-04 — Increased straight-drive `w`/`s` duty from 100 to 160 and their timeout to 5000 ms at builder request. Turns remain at duty 100 with a 1000 ms timeout. This higher-power behavior requires another raised-wheel test before floor use.
+- 2026-09-04 — Builder reported the remapped `a`/`d` directions were reversed; their wheel commands were swapped. The corrected turn mapping still requires a repeat test.
+- 2026-09-04 — Initial encoder-feedback wheel-speed control was implemented under plan 002. Controller checks and the full PIOArduino firmware build passed; hardware PID and stop validation remain pending.
 
 ## Decisions
 

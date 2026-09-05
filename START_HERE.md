@@ -6,9 +6,9 @@ A custom differential-drive robot at the beginning of a planned path toward ROS 
 
 ## What exists now
 
-One PlatformIO/Arduino firmware program in `src/main.cpp` targets an ESP32 development module. It reads `w`, `s`, `a`, `d`, and `x` from a 115200-baud serial connection and drives two BTS7960 modules through separate forward/reverse PWM inputs. It also counts the connected encoder A channels and reports both counts for `e`. The motion command timeout is 1000 ms. The previous `pio run` pass on 2026-09-01 was before this firmware change; the local PlatformIO command is currently unavailable, so this revision has not been built here.
+One PlatformIO/Arduino firmware program in `src/main.cpp` targets an ESP32 development module. It reads `w`, `s`, `a`, `d`, and `x` from a 115200-baud serial connection, measures raw encoder speed at 50 Hz, and runs one preliminary feed-forward/PI wheel-speed controller per BTS7960-driven motor. Straight commands target 3000 counts/s for up to 5000 ms with 300 ms acceleration/deceleration ramps; turns target 1800 counts/s for up to 1000 ms with 100 ms ramps. Controller telemetry is emitted every 200 ms. The controller test and PIOArduino firmware build passed on 2026-09-04.
 
-The prior build result does **not** prove that this revision compiles, that a board was flashed, motors moved correctly, the pinout matches the robot, or stopping is safe. There are no automated tests or hardware result records yet. No ROS 2 workspace exists.
+The build and controller test prove that this revision compiles and its basic bounded-control calculations behave as asserted. A 2026-09-04 raised-wheel forward/reverse test showed stable tracking at +/-3000 counts/s without sustained oscillation. It does **not** prove ground-load performance, straight-line accuracy, calibrated wheel speed, or safe stopping. No ROS 2 workspace exists.
 
 ## Current work
 
@@ -39,4 +39,4 @@ pio run --target upload
 pio device monitor
 ```
 
-Use `w`, `s`, `a`, `d`, or `x` as documented in [docs/interfaces.md](docs/interfaces.md). The current firmware latches motion indefinitely and has no timeout, so keep independent power removal within reach. There are no ROS build/run commands yet.
+Use `w`, `s`, `a`, `d`, or `x` as documented in [docs/interfaces.md](docs/interfaces.md). Straight commands time out after 5 seconds and turns after 1 second; keep independent power removal within reach because these software stops are not an emergency stop. There are no ROS build/run commands yet.

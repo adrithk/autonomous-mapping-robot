@@ -21,7 +21,7 @@ ESP32 Arduino firmware (src/main.cpp)
 BTS7960 driver inputs -> motors   [driver, wiring, and motion unverified]
 ```
 
-The firmware maps five characters to two open-loop motor commands at a fixed PWM duty, explicitly disables output on an unknown byte, and stops after a 1000 ms command timeout. It counts encoder A transitions using the corresponding B signal for direction, but does not calculate wheel speed or perform PID. It contains no ROS communication, IMU input, transport framing, or hardware fault input.
+The firmware maps keyboard characters to signed wheel-speed targets, measures encoder speed at 50 Hz, and runs one preliminary feed-forward/PI controller per wheel. Straight commands target 3000 counts/s for up to 5000 ms with 300 ms acceleration/deceleration ramps; turns target 1800 counts/s for up to 1000 ms with 100 ms ramps. Unknown input stops both motors, output is limited to PWM 200, and telemetry is reported every 200 ms. The code builds and its controller calculations have focused automated checks. A raised-wheel forward/reverse test showed stable tracking at +/-3000 counts/s using the preceding 400 ms ramp configuration, but the revised ramps, ground-load tuning, and stopping validation remain pending. It contains no ROS communication, IMU input, transport framing, or hardware fault input.
 
 ## Major hardware and computers
 
@@ -48,8 +48,8 @@ The firmware maps five characters to two open-loop motor commands at a fixed PWM
 |---|---|---|
 | Encoder sampling | ESP32 firmware | Preliminary raw counting code exists; unbuilt and hardware unverified |
 | Motor PWM/direction | ESP32 firmware | Open-loop output implemented; hardware unverified |
-| Wheel velocity control/PID | ESP32 firmware | Not implemented |
-| Immediate command watchdog and actuator-safe state | ESP32 firmware/hardware | Preliminary boot-stop, unknown-input stop, and 1000 ms timeout code exists; unbuilt and hardware unverified |
+| Wheel velocity control/PID | ESP32 firmware | Preliminary 50 Hz feed-forward/PI implementation builds; physical tuning and validation pending |
+| Immediate command watchdog and actuator-safe state | ESP32 firmware/hardware | Preliminary boot-stop, unknown-input stop, 5000 ms straight timeout, and 1000 ms turn timeout code exists; unbuilt and hardware unverified |
 | System emergency stop/power isolation | Dedicated hardware plus coordinated software reporting | Not designed or verified |
 | Serial/transport bridge | ROS computer with matching ESP32 endpoint | Only single-character ESP32 input exists |
 | Wheel odometry calculation/publication | TBD design: encoder acquisition on ESP32; ROS-facing ownership must be decided | Not implemented |
@@ -88,7 +88,7 @@ No TF frames are currently published. A future ROS design will likely need `map`
 ## Configuration ownership
 
 - `platformio.ini` owns the ESP32 build target, framework, and serial/upload rates.
-- `src/main.cpp` currently owns pin assignments, PWM settings, fixed duty, direction polarity, and command characters.
+- `src/main.cpp` currently owns pin assignments, PWM settings, speed targets, controller gains/limits, direction polarity, and command characters.
 - No calibrated robot geometry or sensor configuration exists.
 - Future hardware constants should be centralized and documented with units; ROS parameters should live in the package that consumes them, with a single authoritative robot description for frames and geometry.
 

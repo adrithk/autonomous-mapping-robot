@@ -6,7 +6,7 @@ This repository contains the earliest firmware for a custom differential-drive r
 
 The project is in the **motor-control bring-up** stage. The current ESP32 firmware accepts single-character commands over USB serial and drives left and right PWM/direction outputs. The firmware builds successfully, but the repository contains no recorded physical test results, so motor motion, wiring, direction, and stopping behavior are **not yet verified**.
 
-Encoder-based wheel-speed control, LiDAR, an onboard ROS computer, ROS 2 packages, odometry, SLAM, autonomous exploration, map saving, docking, and a vacuum subsystem are not implemented in this repository. An IMU is intentionally outside the current project plan.
+Preliminary encoder-based wheel-speed control now exists and builds, but it has not been tuned or validated on the robot. LiDAR, an onboard ROS computer, ROS 2 packages, odometry, SLAM, autonomous exploration, map saving, docking, and a vacuum subsystem are not implemented. An IMU is intentionally outside the current project plan.
 
 ## Current firmware behavior
 
@@ -14,7 +14,8 @@ Encoder-based wheel-speed control, LiDAR, an onboard ROS computer, ROS 2 package
 - Serial: 115200 baud
 - Commands: `w` forward, `s` reverse, `a` turn left, `d` turn right, `x` stop
 - Motor outputs: PWM on GPIO 25/33 and direction on GPIO 26/32
-- PWM configuration: 20 kHz, 8-bit, fixed duty value 100/255
+- PWM configuration: 20 kHz, 8-bit, closed-loop output limited to 200/255
+- Initial wheel-speed targets: 3000 counts/s straight, 1800 counts/s turning
 
 This is open-loop bring-up code. It has no command timeout, encoder feedback, velocity controller, or verified emergency-stop mechanism. Do not operate it around people or with the wheels loaded until the safety checks in [docs/testing.md](docs/testing.md) are followed.
 

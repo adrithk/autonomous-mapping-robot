@@ -8,35 +8,37 @@ Unknown values are deliberately marked `TBD`. Update this file in the same chang
 **Transport:** Arduino `Serial` over the board's serial connection  
 **Configured rate:** 115200 baud  
 **Framing:** one byte read at a time; no packet framing, checksum, sequence number, acknowledgement, or version  
-**Update behavior:** polled continuously in `loop()`; motion commands must arrive at least every 1000 ms or the ESP32 stops both motors
-**Units:** commands are categorical; the fixed PWM value is a raw 8-bit duty count, not velocity
+**Update behavior:** polled continuously in `loop()`; `w`/`s` ramp up over 300 ms, ramp down during the final 300 ms, and stop after 5000 ms. `a`/`d` ramp up over 100 ms, ramp down during the final 100 ms, and stop after 1000 ms. Explicit, invalid-input, and timeout stops remain immediate.
+**Units:** keyboard commands select fixed signed encoder-count-per-second targets; counts/revolution remains unverified
 
-| Input byte | Left output | Right output | Intended motion |
+| Input byte | Left target | Right target | Intended motion |
 |---|---|---|---|
-| `w` | `RPWM` duty 100, `LPWM` 0 | `RPWM` duty 100, `LPWM` 0 | Nominal forward; physical direction unverified |
-| `s` | `RPWM` 0, `LPWM` duty 100 | `RPWM` 0, `LPWM` duty 100 | Nominal reverse; physical direction unverified |
-| `a` | `RPWM` 0, `LPWM` duty 100 | `RPWM` duty 100, `LPWM` 0 | Nominal left turn; physical direction unverified |
-| `d` | `RPWM` duty 100, `LPWM` 0 | `RPWM` 0, `LPWM` duty 100 | Nominal right turn; physical direction unverified |
-| `x` | both PWM outputs 0 | both PWM outputs 0 | Stop |
+| `w` | +3000 counts/s | +3000 counts/s | Forward for up to 5 seconds |
+| `s` | -3000 counts/s | -3000 counts/s | Reverse for up to 5 seconds |
+| `a` | -1800 counts/s | +1800 counts/s | Left turn for up to 1 second |
+| `d` | +1800 counts/s | -1800 counts/s | Right turn for up to 1 second |
+| `x` | 0 counts/s | 0 counts/s | Stop and reset both controllers |
 | `e` | unchanged | unchanged | Print encoder counts |
 | carriage return / newline | unchanged | unchanged | Ignored; does not renew the motion lease |
 | any other byte | both PWM outputs 0 | both PWM outputs 0 | Stop |
 
 The firmware prints startup, timeout, and unknown-command messages. While a motion
-command is active, it prints raw left/right encoder counts every 200 ms. The `e`
-command prints the same counts immediately. It does not echo every received byte.
+command is active, it prints each wheel's requested command, ramped target counts/s,
+measured counts/s, controller PWM, and raw count every 200 ms. The `e` command prints
+the same telemetry immediately. It does not echo every received byte.
 
 ### Known limitations
 
-- There is no valid build result for this firmware revision because PlatformIO is unavailable on the current computer.
-- There is no speed argument, wheel-speed telemetry, driver-fault input, or framed/acknowledged transport.
-- The `RPWM`/`LPWM` direction convention is code intent only; electrical polarity and physical wheel direction are unverified.
+- Controller calculations have automated checks and the firmware builds. Raised-wheel forward/reverse tracking passed at +/-3000 counts/s on 2026-09-04; ground-load performance remains unverified.
+- There is no variable-speed command, driver-fault input, or framed/acknowledged transport.
+- Counts/revolution is unverified, so targets and measurements cannot yet be converted reliably to rad/s.
+- Initial gains and left/right electrical polarity require controlled hardware validation.
 - This interface is a bring-up control, not a suitable final ROS transport contract.
 
 ## Current motor driver output interface
 
 **Owner:** ESP32 firmware  
-**PWM:** 20 kHz, 8-bit resolution, Arduino LEDC API  
+**PWM:** 20 kHz, 8-bit resolution, Arduino LEDC API; controller output limited to 200
 **Intended replacement drivers:** two HiLetgo BTS7960 single-channel modules, one per motor; reported purchased but exact board revision, arrival, and wiring are unverified. The former Cytron MDD10A is reported damaged and must not be used.
 **Reported motors:** two expected 12 V metal DC gearmotors with encoders, 131:1, 83 RPM, 45 kg.cm; exact manufacturer/model is unconfirmed  
 **Electrical levels, enable polarity, braking/coasting behavior, and motor rated/stall current:** `TBD`
@@ -51,7 +53,9 @@ command prints the same counts immediately. It does not echo every received byte
 
 **Owner:** ESP32 firmware
 **Electrical path:** encoder A/B signals -> four-channel 5 V-to-3.3 V level shifter -> ESP32 inputs
-**Acquisition:** interrupt on each A channel; B is read to infer direction. Counts are raw transitions, not calibrated wheel position or velocity. Raw totals are reported every 200 ms while motion is commanded and on demand with `e`.
+**Acquisition:** interrupt on each A channel; B is read to infer direction. Count differences are converted to counts/s at a nominal 50 Hz using actual elapsed time. Counts are not yet calibrated to wheel position or rad/s.
+
+**Controller:** one controller per wheel using initial gains `Kp=0.020`, `Ki=0.010`, `Kd=0.000`, and feed-forward `0.048 PWM/(count/s)`. Integral magnitude is limited to 4000 count-seconds and output to PWM 200. Straight targets use a 10000 counts/s² slew limit for a 300 ms ramp to 3000 counts/s; turn targets use an 18000 counts/s² limit for a 100 ms ramp to 1800 counts/s. These values are provisional pending physical tuning.
 
 | Wheel | A input | B input |
 |---|---:|---:|
@@ -60,7 +64,7 @@ command prints the same counts immediately. It does not echo every received byte
 
 The level shifter, encoder wire order, signal voltage, count sign, and count resolution are unverified. GPIO 34-39 have no internal pull resistors; the intended external level shifter must provide suitable pull-ups.
 
-Pin assignments and fixed duty are currently compiled into `src/main.cpp`. They require build, BTS7960-specific wiring/specification review, and bench verification before being treated as authoritative hardware configuration. The reported four-channel level shifter is intended for encoder signals, not motor-driver control inputs; its electrical behavior is also unverified.
+Pin assignments, targets, gains, limits, and polarity are currently compiled into `src/main.cpp`. The code builds, but it requires BTS7960 wiring review and controlled hardware tuning before being treated as a validated configuration. The reported four-channel level shifter is intended for encoder signals, not motor-driver control inputs; its electrical behavior remains unverified.
 
 ## ROS 2 interfaces
 
