@@ -98,10 +98,10 @@ verified under load.
 - Implement the proposed framed protocol in `docs/interfaces.md` with a fixed receive
   buffer, validation, sequence tracking, explicit stop, and a 250 ms command
   watchdog.
-- Add a non-ROS computer-side protocol harness so commands and telemetry can be
-  tested before the Raspberry Pi is configured.
+- Validate command and telemetry framing with focused protocol tests before the
+  Raspberry Pi is configured.
 
-**Gate:** keyboard and ROS-serial firmware builds pass; parser/watchdog tests pass;
+**Gate:** keyboard and ROS-serial firmware builds pass; parser tests pass;
 invalid, stale, oversized, and corrupt input cannot sustain motion; a dated raised-
 wheel serial-control result is recorded.
 

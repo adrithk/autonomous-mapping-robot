@@ -9,8 +9,8 @@
 ## Goal
 
 Add a separately selectable, ROS-ready serial firmware build for the ESP32 while
-preserving the current keyboard/PID build and its behavior. Validate the protocol
-with a non-ROS host harness before depending on Raspberry Pi or ROS installation.
+preserving the current keyboard/PID build and its behavior. Validate its protocol
+logic before depending on Raspberry Pi or ROS installation.
 
 ## Current State
 
@@ -21,7 +21,7 @@ the preceding 400 ms straight ramp showed stable +/-3000 counts/s tracking. The
 current 300 ms straight and 100 ms turn ramps still require physical validation.
 
 `main_ros.cpp`, the framed protocol, parser tests, the second PlatformIO environment,
-and the computer-side harness now exist and pass automated checks. They have not been
+now exist and pass automated checks. They have not been
 physically tested. No ROS workspace or ROS package exists.
 
 ## Inputs
@@ -38,7 +38,6 @@ physically tested. No ROS workspace or ROS package exists.
 - `keyboard` and `ros_serial` PlatformIO environments with exclusive source filters.
 - Shared drivetrain runtime used by both entry points without behavioral duplication.
 - Fixed-buffer protocol parser/encoder with automated tests.
-- Small host-side protocol harness that does not require ROS.
 - Updated interface/build documentation and verification results.
 
 ## Requirements
@@ -68,7 +67,6 @@ physically tested. No ROS workspace or ROS package exists.
 - `src/main_ros.cpp` (new)
 - focused shared files under `include/`, `lib/`, or `src/`
 - `test/`
-- a small host harness under `tools/` or another clearly documented location
 - `docs/interfaces.md`, `docs/testing.md`, `START_HERE.md`, and this plan
 
 ## Implementation Steps
@@ -81,11 +79,10 @@ physically tested. No ROS workspace or ROS package exists.
 4. Implement and test the fixed-buffer frame parser, CRC-16/CCITT-FALSE calculation,
    range checks, and sequence handling without attached hardware.
 5. Add `main_ros.cpp` using the shared drivetrain runtime and protocol implementation.
-6. Add telemetry serialization and a computer-side harness that sends command/stop
-   frames and validates returned state.
+6. Add and test telemetry serialization.
 7. Run automated checks and review boot, timeout, malformed input, integer bounds,
    timer wraparound, and reconnect behavior.
-8. Perform a raised-wheel hardware test from the host harness and record the result.
+8. Perform a raised-wheel hardware test through the future Pi-side connection and record the result.
 9. Update project state; do not mark the plan complete until every criterion passes.
 
 ## Automated Verification
@@ -115,7 +112,7 @@ With wheels raised and independent motor-power removal available:
 
 - Both firmware environments build and all protocol/controller tests pass.
 - The keyboard build retains its documented command behavior.
-- The ROS-serial build can be driven by the non-ROS host harness in both directions.
+- The ROS-serial build accepts documented command frames and emits documented state frames.
 - No invalid/stale input or disconnect can keep a motion lease alive beyond 250 ms.
 - Explicit stop and boot produce zero commanded PWM.
 - Protocol documentation and captured test frames agree byte for byte.
@@ -124,7 +121,7 @@ With wheels raised and independent motor-power removal available:
 ## Progress
 
 - 2026-09-04 — Architecture and protocol specified.
-- 2026-09-05 — Added mutually exclusive `keyboard` and `ros_serial` builds, shared drivetrain runtime, `main_ros.cpp`, fixed-buffer CRC/sequence parser, state framing, 250 ms watchdog, protocol tests, and a non-ROS Python harness.
+- 2026-09-05 — Added mutually exclusive `keyboard` and `ros_serial` builds, shared drivetrain runtime, `main_ros.cpp`, fixed-buffer CRC/sequence parser, state framing, 250 ms watchdog, and protocol tests.
 - 2026-09-05 — Both firmware environments built and the wheel-controller and protocol tests passed. Hardware validation remains pending.
 
 ## Decisions

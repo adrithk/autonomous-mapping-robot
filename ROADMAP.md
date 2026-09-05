@@ -44,8 +44,8 @@ only on repository code and dated results.
 5. **Add the ROS-ready ESP32 command interface — implemented; bench validation
    pending.** The default keyboard build and separately selected `main_ros.cpp` build
    share drivetrain control. The versioned serial interface, fixed-buffer parser,
-   CRC, sequence checking, telemetry, 250 ms watchdog, protocol tests, and non-ROS
-   harness exist and both firmware environments build. Raised-wheel timeout,
+   CRC, sequence checking, telemetry, 250 ms watchdog, and protocol tests exist, and
+   both firmware environments build. Raised-wheel timeout,
    malformed-input, disconnect, and reconnect tests remain.
 
 6. **Begin ROS setup and bridge the drivetrain — planned.** Install the Raspberry Pi,
@@ -102,7 +102,7 @@ and measured hardware values to this robot before reusing an idea.
 |---:|---|
 | 1 | Complete wiring and verify safe keyboard-controlled drivetrain |
 | 2 | Encoder acquisition, wheel-speed PID, and measured drive tests |
-| 3 | ROS-ready ESP32 serial protocol and host harness |
+| 3 | ROS-ready ESP32 serial protocol and tests |
 | 4 | Pi setup, ros2_control bridge, robot model, and wheel odometry |
 | 5 | LiDAR integration, calibrated TF, and first map |
 | 6 | Repeatable autonomous mapping with automatic map saving |

@@ -12,7 +12,7 @@ The build/tests prove compilation and bounded parser/controller behavior. A 2026
 
 ## Current work
 
-The current bounded task is **raised-wheel validation of the ROS-ready ESP32 transport**. Follow [active plan 003](docs/plans/active/003-ros-ready-esp32-transport.md) and use the non-ROS host harness before beginning the Pi-side ROS workspace.
+The current bounded task is completing the Pi-side ROS connection and then performing raised-wheel validation of the ROS-ready ESP32 transport. Follow [active plan 003](docs/plans/active/003-ros-ready-esp32-transport.md).
 
 The intended Pi/ROS sequence is specified in [docs/ros-platform-roadmap.md](docs/ros-platform-roadmap.md). The accepted boundary is a Pi-side `ros2_control` hardware plugin over USB serial; the ESP32 remains a non-ROS device that owns PID and watchdog behavior.
 
