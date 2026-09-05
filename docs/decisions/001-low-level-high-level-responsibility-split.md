@@ -11,7 +11,7 @@ The initial repository README describes a differential-drive robot with an ESP32
 
 The ESP32 will own direct motor outputs, encoder sampling, local wheel-speed control, command-loss handling, and immediate actuator-safe behavior. The ROS computer will own hardware bridging, robot model/TF coordination, sensor processing, state estimation, SLAM, localization, Nav2, and mission-level autonomy.
 
-Only ESP32 open-loop motor output exists today. This record sets intended ownership; it does not assert that the planned components are implemented.
+ESP32 encoder-feedback wheel control now exists. The Pi transport, ROS packages, and autonomous mapping components remain planned. This record sets ownership; it does not assert that planned components are implemented.
 
 ## Alternatives considered
 
@@ -26,5 +26,4 @@ The split preserves deterministic, local handling of actuator timing and command
 - The microcontroller-to-computer protocol must carry commands, timestamps/validity, feedback, and diagnostics with defined failure behavior.
 - Safety must be layered; ESP32 stop behavior does not replace independent power isolation or system hazard analysis.
 - ROS-side implementations should reuse standard ROS 2, `ros2_control`, `robot_localization`, SLAM Toolbox, and Nav2 interfaces where appropriate.
-- The exact odometry computation boundary and transport technology remain future decisions.
-
+- Decision 002 resolves the transport and odometry boundary: a Pi-side `ros2_control` hardware plugin uses a versioned serial link to the ESP32, and the standard differential-drive controller computes ROS wheel odometry from returned state.

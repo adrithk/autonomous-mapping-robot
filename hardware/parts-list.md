@@ -1,7 +1,7 @@
 # Robot parts list
 
-**Last updated:** 2026-09-03
-**Project stage:** Motor and encoder bring-up
+**Last updated:** 2026-09-05
+**Project stage:** ROS-ready ESP32 transport bench validation
 
 This is the source of truth for hardware believed to be on hand, still needed, or not yet selected. "On hand" means the part was reported by the builder; it does not mean its exact variant, electrical compatibility, wiring, or operation has been verified.
 
@@ -11,7 +11,7 @@ Add product links, exact model numbers, and measured values as they become avail
 
 | Qty. | Part | Reported description | Exact model / link | Details still needed | Verification state |
 |---:|---|---|---|---|---|
-| 2 expected | DC gearmotor with encoder | 12 V metal DC geared motor with encoder; 131:1; 83 RPM; 45 kg.cm | Possible match from earlier project chat: DFRobot FIT0185; **not confirmed** | Confirm there are two identical motors; seller/manufacturer; motor and encoder pinout; encoder supply and signal voltage; counts per wheel revolution; rated and stall current | Reported on hand; not bench verified |
+| 2 expected | DC gearmotor with encoder | 12 V metal DC geared motor with encoder; 131:1; 83 RPM; 45 kg.cm | Possible match from earlier project chat: DFRobot FIT0185; **not confirmed** | Confirm exact model; encoder voltage; counts per wheel revolution; rated and stall current | Both motors and encoder directions have operated; exact specifications remain unverified |
 | 1 | Microcontroller board | ESP32 development board | Exact board/variant and link `TBD` | Variant; input voltage limits; available GPIO; USB connector; whether it supports the intended Bluetooth mode | Firmware targets PlatformIO `esp32dev`; physical board not identified or verified |
 | 1 | Battery | Tattu LiPo battery | Exact model and link `TBD` | Cell count; nominal/max voltage; capacity in mAh; discharge rating; connector; charger; measured condition | Reported on hand; compatibility not verified |
 | 2 expected | Drive wheels | Pololu wheels | Exact model, diameter, width, hub type, and link `TBD` | Confirm quantity; motor-shaft fit; measured loaded radius | Reported on hand; exact wheel unknown |
@@ -21,8 +21,8 @@ Add product links, exact model numbers, and measured values as they become avail
 
 | Qty. | Part | Reported description | Exact model / link | Details still needed | Verification state |
 |---:|---|---|---|---|---|
-| 2 | Motor drivers | HiLetgo BTS7960 43 A single-channel H-bridge motor-driver modules; one module is intended for each drive motor | Amazon listing / board revision `TBD` | Arrival/condition; exact board labeling; logic-supply requirement; ESP32 input thresholds; enable/PWM polarity; cooling; real continuous-current capability; motor and battery compatibility | Reported purchased; not wired or bench verified |
-| 1 | Logic-level shifter | Four-channel bidirectional BSS138-style level-shifter module, photographed by builder; intended to shift encoder signals from 5 V to ESP32-safe 3.3 V | Exact listing `TBD` | Confirm encoder supply/output voltage, pin labels, channel mapping, pull-up behavior, edge quality, and encoder count | Reported on hand; not wired or electrically verified |
+| 2 | Motor drivers | HiLetgo BTS7960 43 A single-channel H-bridge motor-driver modules; one per drive motor | Amazon listing / board revision `TBD` | Exact board labeling; logic thresholds; cooling; real continuous-current capability; motor/battery compatibility | Connected and used for motion/PID observations; electrical and thermal limits remain unverified |
+| 1 | Logic-level shifter | Four-channel bidirectional BSS138-style level-shifter module used for encoder signals | Exact listing `TBD` | Measure encoder/output voltage, confirm pull-up behavior and edge quality | Connected and encoder counts observed; electrical performance not measured |
 
 ## Retired / do not use
 

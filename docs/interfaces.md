@@ -39,15 +39,15 @@ the same telemetry immediately. It does not echo every received byte.
 
 **Owner:** ESP32 firmware  
 **PWM:** 20 kHz, 8-bit resolution, Arduino LEDC API; controller output limited to 200
-**Intended replacement drivers:** two HiLetgo BTS7960 single-channel modules, one per motor; reported purchased but exact board revision, arrival, and wiring are unverified. The former Cytron MDD10A is reported damaged and must not be used.
+**Motor drivers:** two reported HiLetgo BTS7960 single-channel modules, one per motor. Their basic movement has been demonstrated, but exact board revision, electrical limits, thermal behavior, and safe-state behavior remain unverified. The former Cytron MDD10A is reported damaged and must not be used.
 **Reported motors:** two expected 12 V metal DC gearmotors with encoders, 131:1, 83 RPM, 45 kg.cm; exact manufacturer/model is unconfirmed  
 **Electrical levels, enable polarity, braking/coasting behavior, and motor rated/stall current:** `TBD`
 
 | Channel | BTS7960 GPIOs | Verification status |
 |---|---|---|
-| Shared enable | GPIO 27 to all four `R_EN`/`L_EN` pins | Intended wiring; requires external 10 kΩ pull-down to ground and bench verification |
-| Left | GPIO 25 `RPWM` + GPIO 26 `LPWM` | Code present; wiring and behavior unverified |
-| Right | GPIO 32 `RPWM` + GPIO 33 `LPWM` | Code present; wiring and behavior unverified |
+| Shared enable | GPIO 27 to all four `R_EN`/`L_EN` pins | Reported connected; external 10 kΩ pull-down intended; electrical safe-state test pending |
+| Left | GPIO 25 `RPWM` + GPIO 26 `LPWM` | Motion and PID telemetry observed; exact electrical verification pending |
+| Right | GPIO 32 `RPWM` + GPIO 33 `LPWM` | Motion and PID telemetry observed; exact electrical verification pending |
 
 ## Current encoder input interface
 
@@ -62,32 +62,75 @@ the same telemetry immediately. It does not echo every received byte.
 | Left | GPIO 34 | GPIO 35 |
 | Right | GPIO 36 (`VP`) | GPIO 39 (`VN`) |
 
-The level shifter, encoder wire order, signal voltage, count sign, and count resolution are unverified. GPIO 34-39 have no internal pull resistors; the intended external level shifter must provide suitable pull-ups.
+Both encoder count signs have been observed in forward and reverse. Signal voltage, count resolution, missed-count behavior, and the exact level-shifter electrical performance remain unverified. GPIO 34-39 have no internal pull resistors; the external level shifter must provide suitable pull-ups.
 
-Pin assignments, targets, gains, limits, and polarity are currently compiled into `src/main.cpp`. The code builds, but it requires BTS7960 wiring review and controlled hardware tuning before being treated as a validated configuration. The reported four-channel level shifter is intended for encoder signals, not motor-driver control inputs; its electrical behavior remains unverified.
+Pin assignments, gains, limits, and polarity are shared by both firmware entry points in `src/robot_drive.cpp`. The reported four-channel level shifter is used for encoder signals, not motor-driver control inputs; its electrical behavior still requires measurement.
+
+## ROS-ready USB serial protocol
+
+**Implementation:** `src/main_ros.cpp` and `include/ros_serial_protocol.h`
+**Build environment:** `ros_serial`
+**Transport:** USB serial at 115200 baud, ASCII, newline-delimited
+**Protocol version:** 1
+**Command rate:** intended 50 Hz from the Pi
+**ESP32 watchdog:** 250 ms from the last valid, newer command frame
+**Telemetry rate:** 20 Hz
+**Wire units:** encoder counts and encoder counts/s; the future Pi hardware plugin converts to/from ROS radians and rad/s
+
+Every payload is followed by `*HHHH\n`, where `HHHH` is four uppercase hexadecimal
+digits containing CRC-16/CCITT-FALSE over every ASCII byte before `*` (polynomial
+`0x1021`, initial value `0xFFFF`, no reflection, no final XOR). Carriage returns are
+ignored. Frames longer than the fixed 128-byte receive buffer are rejected.
+
+| Direction | Frame payload before CRC | Meaning |
+|---|---|---|
+| Pi -> ESP32 | `C,1,SEQ,LEFT_CPS,RIGHT_CPS` | Set signed wheel targets; each target must be within -4000 to +4000 counts/s |
+| Pi -> ESP32 | `X,1,SEQ` | Stop immediately and reset both wheel controllers |
+| ESP32 -> Pi | `S,1,ACK,ESP_MS,LEFT_COUNT,RIGHT_COUNT,LEFT_CPS,RIGHT_CPS,LEFT_PWM,RIGHT_PWM,STATUS` | State and acknowledgement telemetry |
+
+`SEQ`/`ACK` are unsigned 32-bit sequence numbers. Only newer command sequences are
+accepted, using wraparound-safe comparison. A valid zero/zero command and `X` both
+stop immediately. Invalid version, format, checksum, range, overflow, duplicate, or
+older sequence does not refresh the watchdog. USB reconnect does not replay a prior
+command because the ESP32 boots stopped and requires a new valid frame.
+
+Status bits are latched until reboot in this first implementation:
+
+| Bit | Value | Meaning |
+|---:|---:|---|
+| 0 | `0x0001` | Command watchdog expired |
+| 1 | `0x0002` | Receive buffer overflow |
+| 2 | `0x0004` | Invalid frame format/version |
+| 3 | `0x0008` | Invalid CRC |
+| 4 | `0x0010` | Wheel target out of range |
+| 5 | `0x0020` | Duplicate or stale sequence |
+
+This protocol builds and has parser/CRC unit tests, but it has not been uploaded or
+bench-tested. The Pi-side `ros2_control` plugin does not exist yet.
 
 ## ROS 2 interfaces
 
-None exist. There are no topics, services, actions, nodes, parameters, message types, launch files, or ROS packages in the repository.
-
-The planned default is a Raspberry Pi bridge node or `ros2_control` hardware
-interface that subscribes to `geometry_msgs/msg/Twist` commands on `/cmd_vel`,
-converts linear/angular velocity into left/right wheel-speed targets, and sends those
-targets to the ESP32 over a versioned USB serial protocol. The ESP32 will run both
-wheel PID loops and the command watchdog, then return encoder counts, measured wheel
-speeds, and fault state. Direct ROS topic subscription on the ESP32 would require
-micro-ROS and is an alternative, not the current default.
+No ROS workspace or ROS node exists. The accepted design is a Pi-side custom
+`hardware_interface::SystemInterface` connected to the ESP32 protocol above. The
+standard Jazzy `diff_drive_controller` will subscribe to its
+`~/cmd_vel` `geometry_msgs/msg/TwistStamped` input, expose wheel velocity command
+interfaces, consume wheel position/velocity state, publish odometry, and initially
+publish `odom -> base_link`. The ESP32 is not a ROS subscriber; it is the serial motor
+controller behind the ROS hardware plugin.
 
 Before adding a ROS bridge, specify at minimum:
 
-- command and telemetry message schemas, versioning, units, ranges, timestamps, rates, and timeout behavior;
-- the exact owner and parameters for converting `geometry_msgs/msg/Twist` to wheel targets;
+- measured encoder counts/revolution, loaded wheel radius, and wheel separation;
+- serial device identity, reconnect policy, and ROS diagnostic mapping;
 - encoder/odometry publication ownership and covariance;
-- diagnostic and hardware-fault reporting;
-- reconnect, malformed-message, and stale-command behavior.
+- controller namespace/remappings and final command limits.
 
 Prefer standard ROS message types at the ROS boundary. Do not invent a custom service or action when standard ROS 2 or Nav2 interfaces already express the operation.
 
 ## TF frames and coordinate conventions
 
-No transforms are published and no coordinate convention has been committed. Frame names, parent/child relationships, publishers, wheel geometry, sensor mounts, and REP-103/REP-105 conformance must be specified when the robot description/odometry plan begins. Likely ROS frame names are discussed only as future context in [ARCHITECTURE.md](../ARCHITECTURE.md), not as an implemented contract.
+No transforms are published. The planned tree is `map -> odom -> base_link -> laser`:
+SLAM Toolbox owns `map -> odom`, `diff_drive_controller` initially owns
+`odom -> base_link`, and robot state publisher owns the fixed `base_link -> laser`
+mount transform. Exact geometry, frame parameters, and REP-103/REP-105 validation
+remain future ROS-workspace tasks.

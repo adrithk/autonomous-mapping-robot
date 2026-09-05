@@ -8,7 +8,7 @@
 
 ## Goal
 
-Make the existing ESP32 open-loop motor command path deterministic, fail-safe on command loss, and automatically testable, then record a controlled bench validation of both channels.
+Validate deterministic command-loss and stop behavior for the ESP32 motor command paths, then record a controlled bench validation of both channels.
 
 ## Current State
 
@@ -104,7 +104,7 @@ With wheels unloaded, a current-limited motor supply, and independent power remo
 
 ## Decisions
 
-- Keep the task limited to safe open-loop command bring-up; encoder acquisition and closed-loop speed control are follow-up plans.
+- Keep this plan focused on physical boot, stop, invalid-input, timeout, and power-isolation validation; closed-loop control and ROS transport are tracked separately.
 - Extract only enough pure logic for deterministic tests rather than introducing a protocol framework.
 - Low-level loss-of-command handling belongs on the ESP32; see [decision 001](../../decisions/001-low-level-high-level-responsibility-split.md).
 
@@ -118,7 +118,7 @@ These block physical completion, but do not block drafting the state table or te
 ## Results
 
 - Automated baseline: `pio run` passed on 2026-09-01.
-- Hardware results: none.
+- Preliminary motion/PID observations exist under `results/`, but the repeated safety acceptance result required by this plan does not.
 
 ## Follow-up Work
 

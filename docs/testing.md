@@ -18,7 +18,7 @@ Run from the repository root:
 pio run
 ```
 
-The original firmware build passed on 2026-09-01. On 2026-09-04, the wheel-speed controller test and the PIOArduino firmware build passed after initial PID integration. No CI workflow, ROS workspace, launch files, or ROS configuration validators currently exist.
+The original firmware build passed on 2026-09-01. On 2026-09-04, the wheel-speed controller test and firmware build passed after PID integration. On 2026-09-05, the `keyboard` and `ros_serial` firmware environments built and the wheel-controller and ROS-serial protocol tests passed. No CI workflow, ROS workspace, launch files, or ROS configuration validators currently exist.
 
 ### Checks to add with relevant features
 

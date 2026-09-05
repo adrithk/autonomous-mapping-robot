@@ -1,6 +1,6 @@
 # Codex project instructions
 
-This repository develops a differential-drive robot from ESP32 motor bring-up toward ROS 2 mapping and navigation. Repository evidence, not chat history or intent alone, defines project state.
+This repository develops a differential-drive robot from ESP32 encoder-feedback motor control toward ROS 2 autonomous fresh-zone mapping. Repository evidence, not chat history or intent alone, defines project state.
 
 ## Read before substantial work
 
@@ -15,7 +15,9 @@ This repository develops a differential-drive robot from ESP32 motor bring-up to
 
 - Keep timing-sensitive hardware control on the microcontroller: motor outputs, encoder sampling, low-level wheel-speed control, command watchdogs, and immediate actuator-safe behavior.
 - Keep compute-heavy/system-level behavior on the ROS computer: hardware bridging, robot model/TF coordination, sensor drivers, state estimation, SLAM, localization, Nav2, missions, exploration, coverage, and docking orchestration.
-- Treat the split above as intended architecture; only the ESP32 open-loop motor command sketch exists today.
+- The ESP32 has separate `keyboard` and `ros_serial` builds with shared encoder-feedback wheel control. The serial build compiles and has parser tests but lacks physical validation; all Pi-side ROS packages remain planned.
+- Use the accepted Pi/ESP32 boundary in `docs/decisions/002-ros-control-serial-boundary.md`: ROS 2 and `ros2_control` run on the Raspberry Pi; the ESP32 receives a versioned serial wheel command and does not run micro-ROS in the first version.
+- Preserve the keyboard firmware as the default build. `src/main.cpp` and `src/main_ros.cpp` are separately filtered PlatformIO entry points; never compile both Arduino `setup()`/`loop()` definitions together. See decision 003 and active plan 003.
 - Prefer standard ROS 2, `ros2_control`, `robot_localization`, SLAM Toolbox, and Nav2 capabilities when they fit. Inspect available packages before creating new abstractions or duplicating framework behavior.
 - Keep hardware-specific values centralized in the component that owns them. Record units, frames, rates, and protocol changes in `docs/interfaces.md`.
 
@@ -32,6 +34,7 @@ This repository develops a differential-drive robot from ESP32 motor bring-up to
 
 - For current firmware changes, run `pio run`; add and run relevant PlatformIO tests when testable logic is introduced.
 - When a ROS 2 workspace exists, run the applicable package-scoped or workspace checks, normally `colcon build`, `colcon test`, and `colcon test-result --verbose`.
+- `pio run` builds the default `keyboard` environment. For shared firmware changes, verify both `pio run -e keyboard` and `pio run -e ros_serial`, plus the controller and protocol tests.
 - Distinguish compile success, automated test success, bench validation, and integrated robot validation.
 - Never say hardware-dependent behavior works without a dated result under `results/` containing the setup, measurements, and outcome.
 - Code presence is not acceptance evidence. Keep uncertain values marked `TBD` and planned components explicitly labeled.
@@ -42,4 +45,3 @@ This repository develops a differential-drive robot from ESP32 motor bring-up to
 After meaningful work, update the active plan. If an interface changes, update `docs/interfaces.md`; if ownership changes, update `ARCHITECTURE.md`; if acceptance evidence changes, update `ROADMAP.md`; if physical testing occurs, add a result under `results/`. Move a finished plan to `docs/plans/completed/` only after its acceptance criteria are met.
 
 Use this loop: **DEFINE → SPEC → PLAN → IMPLEMENT → AUTOMATED VERIFY → REVIEW → HARDWARE TEST → RECORD RESULTS → UPDATE DOCS/PLAN → COMMIT → NEXT TASK**.
-

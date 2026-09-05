@@ -1,54 +1,65 @@
 # Autonomous mapping robot roadmap
 
 **Last updated:** 2026-09-04
-**Current stage:** Initial wheel-speed PID tuning
+**Current stage:** ROS-ready ESP32 transport bench validation; final-payload PID validation deferred
 
 The only product goal is a two-wheel differential-drive robot that can be placed in
 an unknown indoor zone, turned on, autonomously explore it, and save a fresh map with
-SLAM Toolbox. The project will not use an IMU. The drivetrain will be completed and
-tested independently before Raspberry Pi, LiDAR, and ROS integration. Loading old
+SLAM Toolbox. The project will not use an IMU. The drivetrain is being validated
+independently before Raspberry Pi, LiDAR, and ROS integration. Loading old
 maps or navigating to user-selected goals is outside this roadmap.
+
+The detailed Raspberry Pi and ROS platform sequence is defined in
+[`docs/ros-platform-roadmap.md`](docs/ros-platform-roadmap.md). Status below is based
+only on repository code and dated results.
 
 ## Build order
 
-1. **Finish and verify the physical drivetrain** — Install both BTS7960 drivers,
+1. **Finish and verify the physical drivetrain — in progress.** Both BTS7960 drivers,
    encoders, level shifter, power distribution, fuse, and accessible motor-power
-   disconnect. Confirm every rail and signal with motor power off before testing.
+   disconnect must be installed and documented. Motor/encoder operation has been
+   observed, but exact electrical ratings, protection, and safe-state behavior remain
+   incompletely recorded.
 
-2. **Prove simple keyboard driving** — Use a small ESP32 bring-up program to accept
+2. **Prove simple keyboard driving — functionally demonstrated; formal safety checks
+   remain.** The ESP32 accepts
    keyboard commands for forward, reverse, left, right, and stop. Verify boot-stop,
    command timeout, individual wheel direction, turning, and stopping first with the
-   wheels raised and then at low speed on the floor. The existing firmware is only a
-   preliminary unbuilt draft until these tests are recorded.
+   wheels raised and then at low speed on the floor. Movement has been reported, but
+   repeated measured boot/stop/timeout tests are not yet recorded.
 
-3. **Validate encoder feedback** — Read both quadrature encoders on the ESP32,
+3. **Validate encoder feedback — partially complete.** Both quadrature encoders are
+   read on the ESP32 and their forward/reverse signs have been observed. Next,
    measure counts per wheel revolution, determine the correct sign in both
-   directions, and calculate wheel speed in rad/s at a fixed update rate. Do not begin
-   PID tuning until the counts and speed measurements are reliable.
+   directions under the final wiring, and calculate wheel speed in rad/s at a fixed
+   update rate.
 
-4. **Implement and test wheel-speed PID** — Run one local controller per wheel on the
-   ESP32. Each controller compares a target wheel speed with encoder-measured speed
-   and adjusts BTS7960 PWM. Add output limits, integral anti-windup, safe direction
-   changes, and command-loss behavior. Record straight-drive, reverse, and turn tests.
+4. **Implement and test wheel-speed PID — implemented; final validation pending.** One
+   local controller per wheel runs at 50 Hz with feed-forward/PI control, output
+   limits, integral bounding, target ramps, and command timeouts. Raised-wheel
+   tracking passed with the preceding 400 ms ramp. A qualitative ground run was
+   nearly straight with slight right drift. Preserve the gains until the Pi/LiDAR
+   payload is mounted, then run measured ground trials.
 
-5. **Add the ROS-ready ESP32 command interface** — After PID passes, replace the
-   temporary keyboard command format with a versioned serial interface for left/right
-   wheel-speed targets, encoder state, measured wheel speeds, timestamps, and faults.
-   Test it first with a small computer-side test program; full ROS is not required for
-   that protocol test. The ESP32 keeps PID and immediate stopping locally.
+5. **Add the ROS-ready ESP32 command interface — implemented; bench validation
+   pending.** The default keyboard build and separately selected `main_ros.cpp` build
+   share drivetrain control. The versioned serial interface, fixed-buffer parser,
+   CRC, sequence checking, telemetry, 250 ms watchdog, protocol tests, and non-ROS
+   harness exist and both firmware environments build. Raised-wheel timeout,
+   malformed-input, disconnect, and reconnect tests remain.
 
-6. **Begin ROS setup and bridge the drivetrain** — Install the Raspberry Pi, its
-   regulated supply, storage/cooling, and ROS 2 Jazzy. Normally a Raspberry Pi ROS
-   node or `ros2_control` hardware interface subscribes to `/cmd_vel`, converts the
-   requested linear/angular motion into wheel-speed targets, and sends those targets
-   over serial. The ESP32 does not need to subscribe directly to ROS topics unless a
-   deliberate micro-ROS design is chosen. Verify ROS keyboard teleoperation and wheel
-   feedback before adding mapping.
+6. **Begin ROS setup and bridge the drivetrain — planned.** Install the Raspberry Pi,
+   regulated supply, storage/cooling, Ubuntu 24.04, and ROS 2 Jazzy. Implement the
+   accepted Pi-side `ros2_control` `SystemInterface`; configure
+   `joint_state_broadcaster` and `diff_drive_controller`; and verify ROS keyboard
+   teleoperation, joint feedback, wheel odometry, reconnect behavior, and ESP32
+   watchdog stopping. The ESP32 will not directly subscribe to ROS topics.
 
-7. **Integrate wheel odometry, LiDAR, and TF** — Install the 2D LiDAR; publish wheel
-   odometry and laser scans with correct units, timestamps, and frames. Calibrate
-   loaded wheel radius and track width, then verify one coherent
-   `odom -> base_link -> laser` TF tree. No IMU or IMU fusion is planned.
+7. **Integrate wheel odometry, LiDAR, and TF — planned.** Install the exact LiDAR and
+   its supported ROS driver; publish `/scan`; add the measured `base_link -> laser`
+   transform; and verify one coherent `odom -> base_link -> laser` tree. Use
+   `diff_drive_controller` odometry initially. No IMU or IMU fusion is planned, and
+   `robot_localization` is deferred unless another useful odometry source is added.
 
 8. **Run autonomous mapping** — Configure SLAM Toolbox, map saving, and a
    frontier-exploration component. SLAM builds the map; exploration selects reachable
@@ -67,6 +78,7 @@ maps or navigating to user-selected goals is outside this roadmap.
 - **Motors ready:** both wheels pass boot, direction, stop, and timeout bench tests.
 - **Hardware ready:** all installed parts and power rails are identified and verified.
 - **PID ready:** both wheels track commanded speeds and the robot drives and turns repeatably.
+- **Transport ready:** both selectable firmware builds pass; corrupt/stale serial data and disconnects cannot sustain motion beyond the 250 ms watchdog.
 - **ROS ready:** the workspace builds/tests and ROS teleoperation reports valid wheel state.
 - **Sensors ready:** wheel odometry, LiDAR, and TF run without timestamp or frame errors.
 - **Autonomous mapping ready:** two autonomous runs produce consistent maps of the same environment and end with the robot stopped and a saved map.
@@ -90,8 +102,8 @@ and measured hardware values to this robot before reusing an idea.
 |---:|---|
 | 1 | Complete wiring and verify safe keyboard-controlled drivetrain |
 | 2 | Encoder acquisition, wheel-speed PID, and measured drive tests |
-| 3 | ROS-ready ESP32 serial protocol, then Pi and ROS 2 setup |
-| 4 | ROS bridge, robot model, and wheel odometry |
+| 3 | ROS-ready ESP32 serial protocol and host harness |
+| 4 | Pi setup, ros2_control bridge, robot model, and wheel odometry |
 | 5 | LiDAR integration, calibrated TF, and first map |
 | 6 | Repeatable autonomous mapping with automatic map saving |
 | 7+ | Tuning and autonomous-mapping validation across three environments |
