@@ -120,9 +120,9 @@ and no motor motion occurs during Pi boot or serial discovery.
 ### 3. Add robot description and ros2_control
 
 - Create the two wheel joints and fixed LiDAR transform in URDF/Xacro.
-- Implement a C++ `hardware_interface::SystemInterface` that converts ROS wheel
-  radians/radian-per-second to encoder counts/counts-per-second at the serial
-  boundary and returns encoder-derived wheel state.
+- Implement a C++ `hardware_interface::SystemInterface` that sends ROS wheel
+  rad/s in version-2 serial frames and converts returned encoder counts/counts-per-second
+  to radians/rad/s for wheel state.
 - Configure `controller_manager`, `joint_state_broadcaster`, and
   `diff_drive_controller` with measured wheel radius and separation.
 - Let `diff_drive_controller` publish wheel odometry and `odom -> base_link` initially.

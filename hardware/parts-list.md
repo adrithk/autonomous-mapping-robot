@@ -20,6 +20,15 @@ Add product links, exact model numbers, and measured values as they become avail
 
 ## Reported drivetrain dimensions
 
+**Updated preliminary URDF inputs (2026-09-06):** front is the protruding caster
+end; wheel radius 0.040 m; center separation 0.205 m; outside tire width 0.215 m;
+axle-to-front 0.180 m and axle-to-back 0.080 m (total 0.260 m). Equal tire widths
+of 0.010 m are inferred, not measured. Chassis clearance 0.040 m is explicitly
+assumed by the builder. These replace the historical dimensions below for the
+preliminary model in `../my_bot`; final LiDAR mounting and encoder calibration
+remain pending. The model's plate thickness and caster geometry are visual
+approximations, not physical measurements.
+
 **Geometry revision pending (2026-09-06):** the builder moved the motors. The
 previous wheel separation and footprint below are historical and must not be used
 for the new layout without confirmation. Ask the builder for updated wheel
@@ -111,3 +120,11 @@ These may already be present, but they have not been identified yet.
 ## Update checklist
 
 When adding a product link, also record its manufacturer, exact part number, quantity, important electrical/mechanical specifications, and whether the value comes from a datasheet or a measurement. Physical test results belong under [`../results/`](../results/), not in this inventory.
+
+## Provisional LiDAR mount
+
+Builder authorized a centered LiDAR for the preliminary URDF. Interpreting
+“6 cm above the wheels” as above the wheel axles gives x=0, y=0, z=0.10 m
+relative to the floor-level axle-midpoint base_link; level/yaw zero are assumed.
+This supersedes the deferred model height, not the requirement to confirm the
+actual mount before mapping. The cylinder in the model is visual-only.

@@ -6,7 +6,7 @@ A custom differential-drive robot at the beginning of a planned path toward ROS 
 
 ## What exists now
 
-Two mutually exclusive PlatformIO/Arduino firmware builds target the ESP32. The default `keyboard` build reads `w`, `s`, `a`, `d`, and `x`. The `ros_serial` build accepts versioned checksummed left/right counts/s commands, emits state at 20 Hz, and enforces a 250 ms command watchdog. Both use the shared 50 Hz encoder-feedback wheel controller in `src/robot_drive.cpp`. Both builds and the controller/protocol tests pass.
+Two mutually exclusive PlatformIO/Arduino firmware builds target the ESP32. The default `keyboard` build reads `w`, `s`, `a`, `d`, and `x`. The `ros_serial` build accepts versioned checksummed version-2 left/right rad/s commands (converted internally using preliminary 4185 counts/revolution), emits state at 20 Hz, and enforces a 250 ms command watchdog. Both use the shared 50 Hz encoder-feedback wheel controller in `src/robot_drive.cpp`. Both builds and the controller/protocol tests pass.
 
 The build/tests prove compilation and bounded parser/controller behavior. A 2026-09-04 raised-wheel forward/reverse test showed stable tracking at +/-3000 counts/s using the preceding 400 ms ramp. A later qualitative ground observation reported very slight rightward drift, but no measured ground acceptance test exists. The current ramps and new ROS-serial firmware have not been physically tested. No Raspberry Pi ROS 2 workspace exists.
 
@@ -45,3 +45,7 @@ pio device monitor
 ```
 
 Use `w`, `s`, `a`, `d`, or `x` as documented in [docs/interfaces.md](docs/interfaces.md). Straight commands time out after 5 seconds and turns after 1 second; keep independent power removal within reach because these software stops are not an emergency stop. There are no ROS build/run commands yet.
+
+Pi-side source update (2026-09-07): the sibling `my_bot` now includes the opt-in ESP32
+SystemInterface and default-Gazebo bringup. See active plan 004 and its WSL_SETUP.md.
+Only offline tests have passed; Ubuntu/ROS and physical acceptance remain pending.

@@ -72,3 +72,17 @@ Every result must include:
 - anomalies and follow-up work.
 
 Unrecorded physical observations may guide investigation but do not advance the roadmap.
+
+## ROS serial version 2 checks (2026-09-07)
+
+Both `pio run -e keyboard -e ros_serial` environments passed. Native tests:
+
+```sh
+clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude test/ros_serial_protocol_test.cpp -o /tmp/ros-protocol-test
+/tmp/ros-protocol-test
+clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude test/wheel_speed_controller_test.cpp -o /tmp/wheel-controller-test
+/tmp/wheel-controller-test
+```
+
+These cover parsing/conversion and controller logic, not live USB timing or ROS.
+No physical or ROS integration result is claimed.

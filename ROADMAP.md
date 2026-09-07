@@ -111,3 +111,7 @@ and measured hardware values to this robot before reusing an idea.
 Status is evidence-based. Code compilation is not hardware validation. Record physical
 tests under [`results/`](results/) and keep the active execution plan under
 [`docs/plans/active/`](docs/plans/active/).
+
+2026-09-07 implementation note: sibling my_bot now includes the ESP32 v2 hardware
+plugin and default-simulation/opt-in-hardware bringup. Offline checks passed; ROS
+runtime and physical acceptance remain pending, so milestone acceptance is unchanged.

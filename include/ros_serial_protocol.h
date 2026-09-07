@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <cstddef>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -11,7 +12,7 @@
 namespace RosSerialProtocol
 {
 
-constexpr uint32_t kProtocolVersion = 1;
+constexpr uint32_t kProtocolVersion = 2;
 constexpr size_t kMaximumFrameLength = 128;
 
 enum class MessageType : uint8_t
@@ -24,8 +25,8 @@ struct CommandFrame
 {
   MessageType type;
   uint32_t sequence;
-  int32_t leftCountsPerSecond;
-  int32_t rightCountsPerSecond;
+  double leftRadiansPerSecond;
+  double rightRadiansPerSecond;
 };
 
 struct StateFrame
@@ -89,22 +90,29 @@ inline bool parseUnsigned(const char *text, uint32_t &value)
   return true;
 }
 
-inline bool parseSigned(const char *text, int32_t &value)
+// Decimal/scientific notation only: reject whitespace, hex, NaN and infinity.
+inline bool parseRadians(const char *text, double &value)
 {
   if (text == nullptr || *text == '\0')
   {
     return false;
   }
+  for (const char *c = text; *c != '\0'; ++c)
+  {
+    if (!((*c >= '0' && *c <= '9') || *c == '+' || *c == '-' ||
+          *c == '.' || *c == 'e' || *c == 'E'))
+    {
+      return false;
+    }
+  }
   errno = 0;
   char *end = nullptr;
-  const long parsed = std::strtol(text, &end, 10);
-  if (errno != 0 || *end != '\0' ||
-      parsed < std::numeric_limits<int32_t>::min() ||
-      parsed > std::numeric_limits<int32_t>::max())
+  const double parsed = std::strtod(text, &end);
+  if (errno != 0 || end == text || *end != '\0' || !std::isfinite(parsed))
   {
     return false;
   }
-  value = static_cast<int32_t>(parsed);
+  value = parsed;
   return true;
 }
 
@@ -156,6 +164,11 @@ public:
     {
       reset();
       return ParseResult::Overflow;
+    }
+    if (std::memchr(buffer_, '\0', length_) != nullptr)
+    {
+      reset();
+      return ParseResult::BadFormat;
     }
     buffer_[length_] = '\0';
     const ParseResult result = parse(frame);
@@ -211,8 +224,8 @@ private:
 
     char *leftText = nextToken(cursor);
     char *rightText = nextToken(cursor);
-    if (cursor != nullptr || !parseSigned(leftText, frame.leftCountsPerSecond) ||
-        !parseSigned(rightText, frame.rightCountsPerSecond))
+    if (cursor != nullptr || !parseRadians(leftText, frame.leftRadiansPerSecond) ||
+        !parseRadians(rightText, frame.rightRadiansPerSecond))
     {
       return ParseResult::BadFormat;
     }
@@ -237,7 +250,8 @@ inline size_t formatStateFrame(char *output, size_t outputSize,
 {
   char payload[kMaximumFrameLength];
   const int payloadLength = std::snprintf(
-      payload, sizeof(payload), "S,1,%lu,%lu,%ld,%ld,%ld,%ld,%d,%d,%u",
+      payload, sizeof(payload), "S,%u,%lu,%lu,%ld,%ld,%ld,%ld,%d,%d,%u",
+      static_cast<unsigned>(kProtocolVersion),
       static_cast<unsigned long>(state.acknowledgedSequence),
       static_cast<unsigned long>(state.espMilliseconds),
       static_cast<long>(state.leftEncoderCount),

@@ -74,7 +74,7 @@ When introduced, prefer existing packages for hardware control, transforms, filt
 
 ## Data pipelines
 
-- **Command flow now:** keyboard build uses terminal characters; ROS-serial build accepts versioned left/right counts/s frames. Both feed the same local wheel controllers.
+- **Command flow now:** keyboard build uses terminal characters; ROS-serial build accepts version-2 left/right rad/s frames, converted by the ROS-only `include/ros_wheel_units.h` to counts/s using preliminary per-wheel calibration. Both feed the same local wheel controllers.
 - **Wheel odometry:** planned in `diff_drive_controller`; encoder resolution, wheel radius, wheel separation, covariance, and publication rate remain unmeasured/unconfigured.
 - **State estimation:** planned without an IMU; wheel odometry and LiDAR scan matching will provide the available motion information.
 - **LiDAR:** planned; device, transport, driver, mounting transform, and scan rate are unknown.
@@ -95,3 +95,25 @@ No TF frames are currently published. The planned primary chain is `map -> odom 
 ## Safety, logging, and testing
 
 The repository has software command timeouts, ROS-serial status telemetry, controller/protocol tests, and dated preliminary physical results. It still has no verified independent emergency stop, driver-fault input, or current/thermal monitoring. The test strategy and evidence format are defined in [docs/testing.md](docs/testing.md) and [`results/README.md`](results/README.md).
+
+## Pi-side hardware implementation update — 2026-09-07
+
+The sibling `/Users/adrithk/Developer/my_bot` package now implements a C++
+`my_bot/Esp32System` ros2_control SystemInterface and version-2 POSIX USB transport.
+It exports wheel rad/s commands and radians/rad/s state, with preliminary 4185
+counts/revolution feedback calibration. Default bringup selects Gazebo; real control
+requires `mode:=hardware` and an explicit serial_device. The two models cannot be
+selected together. Hardware uses wall time; simulation and its teleop use /clock.
+
+Startup requires fresh v2 telemetry and an acknowledged explicit stop. Runtime
+telemetry/ACK stalls over 200 ms, new firmware status faults, reboot/time regression
+or I/O failure fault control and attempt a stop. No automatic reconnection/replay.
+The independent ESP32 250 ms watchdog remains required. Previously latched firmware
+status bits are logged; repeated occurrences of the same bit are not observable.
+See sibling HARDWARE.md and WSL_SETUP.md for operation and limitations.
+
+Offline model/configuration and pseudo-terminal transport tests passed, including
+compatibility with this repository's actual firmware parser/state formatter.
+ROS plugin compilation/loading, Gazebo/WSL launch and physical validation remain
+pending. This source implementation supersedes earlier statements that the Pi-side
+plugin is absent; it does not advance hardware/integrated acceptance milestones.

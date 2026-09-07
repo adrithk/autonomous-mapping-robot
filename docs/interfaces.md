@@ -72,11 +72,12 @@ Pin assignments, gains, limits, and polarity are shared by both firmware entry p
 **Implementation:** `src/main_ros.cpp` and `include/ros_serial_protocol.h`
 **Build environment:** `ros_serial`
 **Transport:** USB serial at 115200 baud, ASCII, newline-delimited
-**Protocol version:** 1
+**Protocol version:** 2
 **Command rate:** intended 50 Hz from the Pi
 **ESP32 watchdog:** 250 ms from the last valid, newer command frame
 **Telemetry rate:** 20 Hz
-**Wire units:** encoder counts and encoder counts/s; the future Pi hardware plugin converts to/from ROS radians and rad/s
+**Wire units:** commands in wheel rad/s; feedback remains encoder counts and counts/s.
+The ESP32 converts commands; the future Pi plugin converts feedback to radians and rad/s.
 
 Every payload is followed by `*HHHH\n`, where `HHHH` is four uppercase hexadecimal
 digits containing CRC-16/CCITT-FALSE over every ASCII byte before `*` (polynomial
@@ -90,9 +91,28 @@ resume motion.
 
 | Direction | Frame payload before CRC | Meaning |
 |---|---|---|
-| Pi -> ESP32 | `C,1,SEQ,LEFT_CPS,RIGHT_CPS` | Set signed wheel targets; each target must be within -4000 to +4000 counts/s |
-| Pi -> ESP32 | `X,1,SEQ` | Stop immediately and reset both wheel controllers |
-| ESP32 -> Pi | `S,1,ACK,ESP_MS,LEFT_COUNT,RIGHT_COUNT,LEFT_CPS,RIGHT_CPS,LEFT_PWM,RIGHT_PWM,STATUS` | State and acknowledgement telemetry |
+| Pi -> ESP32 | `C,2,SEQ,LEFT_RAD_S,RIGHT_RAD_S` | Set signed wheel rad/s targets; converted magnitude must not exceed 4000 counts/s |
+| Pi -> ESP32 | `X,2,SEQ` | Stop immediately and reset both wheel controllers |
+| ESP32 -> Pi | `S,2,ACK,ESP_MS,LEFT_COUNT,RIGHT_COUNT,LEFT_CPS,RIGHT_CPS,LEFT_PWM,RIGHT_PWM,STATUS` | State and acknowledgement telemetry |
+
+Command fields accept finite decimal/scientific notation with a decimal point (`.`),
+no whitespace, NaN, infinity or hexadecimal numbers. Version 1 is rejected to prevent
+confusing counts/s with rad/s. Both command and state frames now carry version 2.
+
+`include/ros_wheel_units.h` centralizes preliminary left/right calibration at
+**4185 counts/revolution**, from the builder's approximate 41850 counts over ten
+full wheel rotations on each wheel. This is a reported estimate, not a recorded
+calibration acceptance test. Conversion is `counts/s = rad/s * 4185 / (2*pi)`;
+1 rad/s is approximately 666.06344 counts/s. The per-wheel command limit is
+`4000 * 2*pi / 4185` rad/s (approximately 6.0054). Shared PID and keyboard units
+remain counts/s. Invalid values do not acknowledge a sequence or renew the lease.
+
+The future Pi plugin must send wheel rad/s directly in `C,2` frames with CRC and
+new sequence numbers, and convert raw `S,2` feedback using `2*pi / 4185`.
+It must handle count wraparound, reboot/reset, stale telemetry, reconnect and safe
+activation/deactivation; changing command units does not implement that plugin.
+A USB reconnect without an ESP32 reboot retains the last sequence: the host must
+synchronize rather than assume its sequence can restart at zero.
 
 `SEQ`/`ACK` are unsigned 32-bit sequence numbers. Only newer command sequences are
 accepted, using wraparound-safe comparison. A valid zero/zero command and `X` both
@@ -115,6 +135,14 @@ This protocol builds and has parser/CRC unit tests, but it has not been uploaded
 bench-tested. The Pi-side `ros2_control` plugin does not exist yet.
 
 ## ROS 2 interfaces
+
+**Latest preliminary model inputs (2026-09-06):** wheel radius 0.040 m, wheel
+separation 0.205 m, outer width 0.215 m, front/rear extents from axle 0.180/0.080 m.
+These supersede the historical geometry below. The sibling `my_bot` description
+places `base_link` at floor height beneath the drive-axle midpoint, +X toward the
+front caster. Chassis clearance 0.040 m is assumed; tire width 0.010 m is inferred
+for identical tires. LiDAR now uses a user-authorized provisional centered mount: scan plane 0.10 m above the floor (interpreting 6 cm above wheels as above their axles), level with yaw zero. Confirm before actual mapping. No robot
+hardware plugin or operational odometry is provided by that description package.
 
 **2026-09-06 motor relocation:** the geometry below predates a motor placement
 change. Before implementing/configuring ROS body-velocity conversion or wheel
@@ -152,3 +180,25 @@ SLAM Toolbox owns `map -> odom`, `diff_drive_controller` initially owns
 `odom -> base_link`, and robot state publisher owns the fixed `base_link -> laser`
 mount transform. Exact geometry, frame parameters, and REP-103/REP-105 validation
 remain future ROS-workspace tasks.
+
+## Pi-side hardware implementation update — 2026-09-07
+
+The sibling `/Users/adrithk/Developer/my_bot` package now implements a C++
+`my_bot/Esp32System` ros2_control SystemInterface and version-2 POSIX USB transport.
+It exports wheel rad/s commands and radians/rad/s state, with preliminary 4185
+counts/revolution feedback calibration. Default bringup selects Gazebo; real control
+requires `mode:=hardware` and an explicit serial_device. The two models cannot be
+selected together. Hardware uses wall time; simulation and its teleop use /clock.
+
+Startup requires fresh v2 telemetry and an acknowledged explicit stop. Runtime
+telemetry/ACK stalls over 200 ms, new firmware status faults, reboot/time regression
+or I/O failure fault control and attempt a stop. No automatic reconnection/replay.
+The independent ESP32 250 ms watchdog remains required. Previously latched firmware
+status bits are logged; repeated occurrences of the same bit are not observable.
+See sibling HARDWARE.md and WSL_SETUP.md for operation and limitations.
+
+Offline model/configuration and pseudo-terminal transport tests passed, including
+compatibility with this repository's actual firmware parser/state formatter.
+ROS plugin compilation/loading, Gazebo/WSL launch and physical validation remain
+pending. This source implementation supersedes earlier statements that the Pi-side
+plugin is absent; it does not advance hardware/integrated acceptance milestones.

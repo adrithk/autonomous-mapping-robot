@@ -4,6 +4,7 @@
 
 #include "robot_drive.h"
 #include "ros_serial_protocol.h"
+#include "ros_wheel_units.h"
 
 namespace
 {
@@ -11,7 +12,6 @@ namespace
 constexpr uint32_t kCommandWatchdogMs = 250;
 constexpr uint32_t kCommandRampMs = 100;
 constexpr uint32_t kTelemetryIntervalMs = 50;
-constexpr int32_t kMaximumTargetCountsPerSecond = 4000;
 
 constexpr uint16_t kStatusCommandTimeout = 1U << 0;
 constexpr uint16_t kStatusReceiveOverflow = 1U << 1;
@@ -54,23 +54,24 @@ void handleFrame(const RosSerialProtocol::CommandFrame &frame,
     return;
   }
 
-  if (frame.leftCountsPerSecond < -kMaximumTargetCountsPerSecond ||
-      frame.leftCountsPerSecond > kMaximumTargetCountsPerSecond ||
-      frame.rightCountsPerSecond < -kMaximumTargetCountsPerSecond ||
-      frame.rightCountsPerSecond > kMaximumTargetCountsPerSecond)
+  float leftCountsPerSecond = 0.0f;
+  float rightCountsPerSecond = 0.0f;
+  if (!RosWheelUnits::convertCommand(frame.leftRadiansPerSecond,
+                                     frame.rightRadiansPerSecond,
+                                     leftCountsPerSecond, rightCountsPerSecond))
   {
     gLatchedStatusBits |= kStatusOutOfRange;
     return;
   }
 
   acceptSequence(frame.sequence);
-  if (frame.leftCountsPerSecond == 0 && frame.rightCountsPerSecond == 0)
+  if (leftCountsPerSecond == 0 && rightCountsPerSecond == 0)
   {
     RobotDrive::stop();
     return;
   }
-  RobotDrive::commandWheelSpeeds(frame.leftCountsPerSecond,
-                                 frame.rightCountsPerSecond,
+  RobotDrive::commandWheelSpeeds(leftCountsPerSecond,
+                                 rightCountsPerSecond,
                                  kCommandWatchdogMs, kCommandRampMs);
 }
 

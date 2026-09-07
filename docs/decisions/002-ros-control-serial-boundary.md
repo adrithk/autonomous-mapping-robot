@@ -31,7 +31,8 @@ enforce its own watchdog, and return encoder/controller state.
 
 ## Consequences
 
-- The Pi-side hardware plugin owns ROS-unit conversion and serial reconnect behavior.
+- The Pi-side hardware plugin owns feedback-unit conversion and serial reconnect behavior.
+  Decision 004 moves command rad/s-to-counts/s conversion into the ROS-only ESP32 adapter.
 - The wire protocol must be versioned, bounded, testable, and independent of ROS
   message serialization.
 - Encoder counts per revolution, loaded wheel radius, and wheel separation must be

@@ -3,7 +3,7 @@
 **Status:** Active — next implementation task
 **Owner:** Builder with Codex implementation support
 **Created:** 2026-09-04
-**Updated:** 2026-09-05
+**Updated:** 2026-09-07
 **Related roadmap milestone:** ROS-ready ESP32 command interface
 
 ## Goal
@@ -29,8 +29,8 @@ physically tested. No ROS workspace or ROS package exists.
 - Current GPIO map, polarity, controller limits, and measured encoder signs.
 - Proposed serial contract in `docs/interfaces.md`.
 - Decisions 001, 002, and 003 under `docs/decisions/`.
-- Exact encoder counts per wheel revolution remains `TBD`; the wire format therefore
-  uses counts and counts/s, with ROS conversion deferred to the Pi-side plugin.
+- Preliminary builder measurement: approximately 41850 counts/10 turns on each wheel
+  gives 4185 counts/revolution. Version 2 commands use rad/s; feedback retains raw units.
 
 ## Outputs
 
@@ -52,7 +52,7 @@ physically tested. No ROS workspace or ROS package exists.
 6. Explicit stop, watchdog expiry, parser overflow, and boot must produce zero motor
    output. A single malformed frame does not refresh the lease; subsequent valid
    frames may recover unless a latched hardware fault is introduced later.
-7. Commands and telemetry use fixed-width integer fields and the versioned framing,
+7. Commands use finite decimal rad/s; telemetry and sequences use fixed-width integer fields and the versioned framing,
    units, checksum, and limits specified in `docs/interfaces.md`.
 8. Sequence wraparound must be handled intentionally; replayed/out-of-order frames
    must not extend motion.
@@ -120,6 +120,27 @@ With wheels raised and independent motor-power removal available:
 
 ## Progress
 
+- 2026-09-07 — Updated only ROS firmware/protocol to version 2 rad/s commands,
+  with ROS-only conversion constants at preliminary 4185 counts/revolution per wheel.
+  Keyboard main and shared drivetrain/controller files unchanged. Both PlatformIO
+  environments built successfully. Native controller and expanded protocol/conversion
+  tests passed with clang++ C++11, warnings as errors. Tests cover decimal/scientific
+  input, invalid/nonfinite/overflow values, version-1 rejection, CRC, sequence wrapping,
+  buffer overflow, embedded NUL, conversion signs/zero/limits and state formatting.
+  Physical validation and Pi plugin integration remain pending; plan stays active.
+
+- 2026-09-06 — At builder request, the separate `my_bot` package now includes
+  estimated 1.6 kg mass distribution/inertias, contact parameters, Jazzy
+  `gz_ros2_control`, simulated LiDAR, a local room, controller configuration and
+  simulation launch. Four local structural tests passed; no Gazebo/ROS runtime
+  was available on this Mac. This does not implement the Pi serial hardware
+  plugin or validate the ESP32; those tasks and physical acceptance remain open.
+
+- 2026-09-06 — Created preliminary kinematic description in the separate sibling
+  `my_bot` package at the builder's request; local Xacro/geometry/syntax checks
+  passed. Revised geometry is recorded in interfaces and parts list. No ROS
+  runtime or hardware validation occurred; the serial bridge remains unimplemented.
+
 - 2026-09-05 — Simplified keyboard `e` output to left/right raw encoder counts only; periodic motion telemetry is unchanged. `pio run` and `git diff --check` passed. Upload and hardware verification pending.
 
 - 2026-09-04 — Architecture and protocol specified.
@@ -140,7 +161,7 @@ pending.
 - Use a Pi-side `ros2_control` plugin rather than micro-ROS; see decision 002.
 - Use exclusive PlatformIO entry points rather than compiling two `setup()`/`loop()`
   definitions; see decision 003.
-- Keep encoder counts/counts-per-second on the wire until calibration is measured.
+- Decision 004: ROS-only ESP32 adapter converts rad/s commands; feedback retains raw counts/counts-per-second.
 
 ## Problems / Blockers
 
@@ -149,7 +170,7 @@ pending.
   footprint/LiDAR offsets before TF/navigation setup. Previous geometry is stale;
   counts/s transport testing can proceed without these measurements.
 
-- Counts per wheel revolution is unknown, but it does not block counts/s transport.
+- Preliminary 4185 counts/revolution per wheel needs repeatable calibration validation.
 - Raspberry Pi 5 (8GB) and RPLIDAR A1M8 are identified in the parts list;
   Pi setup and physical serial validation remain pending.
 
@@ -162,3 +183,6 @@ Automated build and unit checks passed on 2026-09-05. No hardware result exists 
 - Raspberry Pi OS/ROS installation and the `ros2_control` hardware plugin.
 - Geometry calibration, robot description, odometry, LiDAR, TF, and SLAM.
 - Nav2, frontier exploration, automatic startup, and map saving.
+
+2026-09-07: Pi plugin source now exists in sibling my_bot; see active plan 004.
+Its offline tests do not satisfy this plan's physical watchdog/reconnect criteria.
