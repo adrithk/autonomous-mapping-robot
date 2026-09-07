@@ -120,3 +120,7 @@ runtime and physical acceptance remain pending, so milestone acceptance is uncha
 records working WSL Gazebo/WASD and 10 Hz simulated LiDAR display, with photo.
 Initial simulation smoke testing is now observed; physical and SLAM acceptance
 remain pending. Exact PC revision and repeatable startup have not been recorded.
+
+2026-09-07: simulation SLAM Toolbox launch, six-box obstacle room and manual map
+saving are implemented in sibling my_bot. See active plan 005. Offline checks pass;
+WSL mapping/map-export acceptance remains pending.
