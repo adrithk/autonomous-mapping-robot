@@ -115,3 +115,8 @@ tests under [`results/`](results/) and keep the active execution plan under
 2026-09-07 implementation note: sibling my_bot now includes the ESP32 v2 hardware
 plugin and default-simulation/opt-in-hardware bringup. Offline checks passed; ROS
 runtime and physical acceptance remain pending, so milestone acceptance is unchanged.
+
+2026-09-07 user evidence update: [initial simulation implementation](results/2026-09-07-initial-simulation.md)
+records working WSL Gazebo/WASD and 10 Hz simulated LiDAR display, with photo.
+Initial simulation smoke testing is now observed; physical and SLAM acceptance
+remain pending. Exact PC revision and repeatable startup have not been recorded.

@@ -40,3 +40,8 @@ firmware S frames. No ESP32 source edits were required in this task.
 No ROS/Gazebo installation or Pi was available here. Do not mark this plan complete
 until runtime checks are recorded. Existing transport plan 003 physical criteria
 remain open.
+
+2026-09-07 user evidence update: [initial simulation implementation](../../../results/2026-09-07-initial-simulation.md)
+records working WSL Gazebo/WASD and 10 Hz simulated LiDAR display, with photo.
+Initial simulation smoke testing is now observed; physical and SLAM acceptance
+remain pending. Exact PC revision and repeatable startup have not been recorded.

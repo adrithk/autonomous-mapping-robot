@@ -49,3 +49,8 @@ Use `w`, `s`, `a`, `d`, or `x` as documented in [docs/interfaces.md](docs/interf
 Pi-side source update (2026-09-07): the sibling `my_bot` now includes the opt-in ESP32
 SystemInterface and default-Gazebo bringup. See active plan 004 and its WSL_SETUP.md.
 Only offline tests have passed; Ubuntu/ROS and physical acceptance remain pending.
+
+2026-09-07 user evidence update: [initial simulation implementation](results/2026-09-07-initial-simulation.md)
+records working WSL Gazebo/WASD and 10 Hz simulated LiDAR display, with photo.
+Initial simulation smoke testing is now observed; physical and SLAM acceptance
+remain pending. Exact PC revision and repeatable startup have not been recorded.
