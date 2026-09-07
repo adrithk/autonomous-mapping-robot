@@ -25,7 +25,8 @@ Unknown values are deliberately marked `TBD`. Update this file in the same chang
 The firmware prints startup, timeout, and unknown-command messages. While a motion
 command is active, it prints each wheel's requested command, ramped target counts/s,
 measured counts/s, controller PWM, and raw count every 200 ms. The `e` command prints
-the same telemetry immediately. It does not echo every received byte.
+only `left_count=<count> right_count=<count>` immediately, without resetting either
+count. It does not echo every received byte.
 
 ### Known limitations
 
@@ -81,6 +82,11 @@ Every payload is followed by `*HHHH\n`, where `HHHH` is four uppercase hexadecim
 digits containing CRC-16/CCITT-FALSE over every ASCII byte before `*` (polynomial
 `0x1021`, initial value `0xFFFF`, no reflection, no final XOR). Carriage returns are
 ignored. Frames longer than the fixed 128-byte receive buffer are rejected.
+The buffer reserves one byte for the string terminator. The first byte exceeding
+127 buffered bytes immediately stops both wheel controllers and latches the overflow
+status, without waiting for a newline or watchdog expiry. Remaining input in that
+frame is discarded through the next newline; a subsequent valid, newer command may
+resume motion.
 
 | Direction | Frame payload before CRC | Meaning |
 |---|---|---|
@@ -109,6 +115,18 @@ This protocol builds and has parser/CRC unit tests, but it has not been uploaded
 bench-tested. The Pi-side `ros2_control` plugin does not exist yet.
 
 ## ROS 2 interfaces
+
+**2026-09-06 motor relocation:** the geometry below predates a motor placement
+change. Before implementing/configuring ROS body-velocity conversion or wheel
+odometry, ask the builder for updated wheel separation and axle/chassis offsets;
+confirm footprint and LiDAR mounting offsets before TF/navigation configuration.
+Do not use the old 0.233 m separation for the new layout. ESP32 counts/s commands
+are independent of motor mounting position.
+
+Builder-reported geometry (2026-09-05): wheel separation **0.233 m**, wheel radius
+**0.040 m**. Measurement procedure and final-payload loaded radius are unverified;
+encoder counts per wheel revolution remain `TBD` for both wheels. These are
+provisional inputs for future ROS configuration, not calibrated acceptance evidence.
 
 No ROS workspace or ROS node exists. The accepted design is a Pi-side custom
 `hardware_interface::SystemInterface` connected to the ESP32 protocol above. The

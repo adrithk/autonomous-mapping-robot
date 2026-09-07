@@ -2,6 +2,8 @@
 
 This repository develops a differential-drive robot from ESP32 encoder-feedback motor control toward ROS 2 autonomous fresh-zone mapping. Repository evidence, not chat history or intent alone, defines project state.
 
+The repository documents the current source of truth, and its requirements, plans, and technical decisions can evolve through discussion with the user. Update the relevant files when an agreed direction changes, and clarify material changes, conflicts, or uncertainties in chat as needed. Keep proposed ideas distinct from accepted decisions, implemented behavior, and verified results.
+
 ## Read before substantial work
 
 1. Read `START_HERE.md`.

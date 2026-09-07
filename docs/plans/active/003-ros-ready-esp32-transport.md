@@ -120,9 +120,20 @@ With wheels raised and independent motor-power removal available:
 
 ## Progress
 
+- 2026-09-05 — Simplified keyboard `e` output to left/right raw encoder counts only; periodic motion telemetry is unchanged. `pio run` and `git diff --check` passed. Upload and hardware verification pending.
+
 - 2026-09-04 — Architecture and protocol specified.
 - 2026-09-05 — Added mutually exclusive `keyboard` and `ros_serial` builds, shared drivetrain runtime, `main_ros.cpp`, fixed-buffer CRC/sequence parser, state framing, 250 ms watchdog, and protocol tests.
 - 2026-09-05 — Both firmware environments built and the wheel-controller and protocol tests passed. Hardware validation remains pending.
+- 2026-09-05 — Fixed receive overflow to report on the first excess byte and immediately call `RobotDrive::stop()`, without waiting for newline or watchdog expiry. Added parser regression checks for the buffer boundary, discarded frame remainder, and recovery on the next frame. On macOS, `pio run` (default keyboard) and `pio run -e ros_serial` passed using the installed PlatformIO executable; both native tests compiled with `clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude` and executed successfully. Physical overflow-stop validation remains pending.
+
+Pre-push check on 2026-09-05: both firmware environments built successfully with
+`pio run -e keyboard -e ros_serial`; both native controller/protocol tests passed
+with `clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude`, and `git diff --check`
+passed. The parts list now records the purchased Pi 5 kit and delivered RPLIDAR
+A1M8. Builder-reported wheel separation (0.233 m) and radius (0.040 m) are recorded
+as provisional geometry; encoder calibration and physical serial validation remain
+pending.
 
 ## Decisions
 
@@ -133,9 +144,14 @@ With wheels raised and independent motor-power removal available:
 
 ## Problems / Blockers
 
+- 2026-09-06 — Builder moved the motors. Ask for revised wheel separation and
+  axle/chassis offsets before ROS motion/odometry configuration, and revised
+  footprint/LiDAR offsets before TF/navigation setup. Previous geometry is stale;
+  counts/s transport testing can proceed without these measurements.
+
 - Counts per wheel revolution is unknown, but it does not block counts/s transport.
-- Exact Raspberry Pi and LiDAR variants are unknown; neither blocks host-harness
-  protocol development.
+- Raspberry Pi 5 (8GB) and RPLIDAR A1M8 are identified in the parts list;
+  Pi setup and physical serial validation remain pending.
 
 ## Results
 

@@ -16,6 +16,35 @@ Add product links, exact model numbers, and measured values as they become avail
 | 1 | Battery | Tattu LiPo battery | Exact model and link `TBD` | Cell count; nominal/max voltage; capacity in mAh; discharge rating; connector; charger; measured condition | Reported on hand; compatibility not verified |
 | 2 expected | Drive wheels | Pololu wheels | Exact model, diameter, width, hub type, and link `TBD` | Confirm quantity; motor-shaft fit; measured loaded radius | Reported on hand; exact wheel unknown |
 | 1 | Chassis | Custom 3D-printed differential-drive chassis | CAD/print file and material `TBD` | Material; revision; dimensions; wheelbase/track width; mounting points; fasteners; center of mass | Reported built; dimensions not recorded |
+| 1 | 2D LiDAR | Slamtec RPLIDAR A1M8 2D 360-degree scanner | RPLIDAR A1M8; product link `TBD` | Confirm physical model/revision, included adapter/cables, power requirements, scan specifications, ROS 2 Jazzy driver, and mounting transform | Order screenshot supplied 2026-09-05 shows delivered; operation and integration unverified |
+
+## Reported drivetrain dimensions
+
+**Geometry revision pending (2026-09-06):** the builder moved the motors. The
+previous wheel separation and footprint below are historical and must not be used
+for the new layout without confirmation. Ask the builder for updated wheel
+separation, axle position relative to the chassis, and outer footprint before
+configuring ROS body-velocity commands, odometry, robot description, or navigation.
+Recheck LiDAR offsets against the new wheel-axis midpoint after final mounting.
+Wheel radius remains provisionally 0.040 m unless the wheels changed; confirm its
+loaded value during calibration. Existing ESP32 counts/s commands need no geometry
+change solely because the motors moved.
+
+Builder clarification on 2026-09-05: wheel separation is **23.3 cm (0.233 m)**
+and wheel radius is **4 cm (0.040 m)**. These supersede the earlier ambiguous
+11.65 cm radius report. Measurement procedure and final-payload loaded radius
+remain unverified; encoder counts per wheel revolution remain `TBD` for each wheel.
+Assumed robot mass: **1600 g (1.6 kg)**, per builder instruction on 2026-09-05.
+This is a working assumption, not a measured final-payload mass. No weighing
+reminder is requested.
+Builder-reported footprint dimensions: **27 cm front-to-back, 24 cm side-to-side
+(outside tire edge to outside tire edge, confirmed by builder 2026-09-06)**.
+Confirm that all dimensions include protrusions/final payload
+before using them as the navigation footprint. Footprint position relative to the
+wheel-axis midpoint remains `TBD`.
+Total robot height and LiDAR height are `TBD` until the Raspberry Pi is installed
+and mounting is finalized. The builder withdrew the earlier 18 cm total height
+on 2026-09-06; do not use it for configuration.
 
 ## Purchased / awaiting integration
 
@@ -23,6 +52,14 @@ Add product links, exact model numbers, and measured values as they become avail
 |---:|---|---|---|---|---|
 | 2 | Motor drivers | HiLetgo BTS7960 43 A single-channel H-bridge motor-driver modules; one per drive motor | Amazon listing / board revision `TBD` | Exact board labeling; logic thresholds; cooling; real continuous-current capability; motor/battery compatibility | Connected and used for motion/PID observations; electrical and thermal limits remain unverified |
 | 1 | Logic-level shifter | Four-channel bidirectional BSS138-style level-shifter module used for encoder signals | Exact listing `TBD` | Measure encoder/output voltage, confirm pull-up behavior and edge quality | Connected and encoder counts observed; electrical performance not measured |
+| 1 kit | Onboard ROS computer kit | CanaKit Raspberry Pi 5 Starter Kit PRO - Turbine Black (128GB Edition), 8GB RAM | Raspberry Pi 5, 8GB RAM; CanaKit kit product link `TBD` | Confirm delivered contents, power-supply rating, cooling, connectors, and robot mounting/power budget | Ordered 2026-09-04; screenshot supplied 2026-09-05 shows “Arriving Wednesday”; not yet received or tested |
+| 1, included in kit | Storage for ROS computer | 128GB edition of the CanaKit Raspberry Pi 5 kit above | Storage medium, manufacturer, and model `TBD` | Confirm actual media type/capacity and endurance; prepare Ubuntu Server 24.04 LTS 64-bit for ROS 2 Jazzy | Awaiting kit delivery; 128GB is from the listing title, not a physical inspection |
+
+The LiDAR and Raspberry Pi kit identities and delivery statuses above come from the
+builder's Amazon order screenshot supplied on 2026-09-05. Both orders were placed
+2026-09-04. Listing titles establish purchased variants, not verified specifications
+or included accessories; confirm those against the delivered hardware. Personal
+shipping and order identifiers are intentionally omitted.
 
 ## Retired / do not use
 
@@ -34,10 +71,7 @@ Add product links, exact model numbers, and measured values as they become avail
 
 | Qty. | Part | Purpose | Selection details to decide | Status |
 |---:|---|---|---|---|
-| 1 | Onboard ROS computer | Runs ROS 2, sensor drivers, state estimation, SLAM, and navigation | Raspberry Pi model/RAM or alternative; power budget; ports; cooling | Needed; not selected |
-| 1 | Storage for ROS computer | OS, ROS workspace, maps, and logs | microSD or SSD type and capacity; endurance requirements | Needed; not selected |
-| 1 | 2D LiDAR | Laser scans for mapping and navigation | Model; range; scan rate; field of view; interface; ROS 2 driver support; power draw | Needed; not selected |
-| As needed | LiDAR cables and mount | Secure LiDAR installation and routing | Connector type, cable length, strain relief, and printed mount depend on the selected LiDAR | Needed after LiDAR selection |
+| As needed | LiDAR cables and mount | Secure RPLIDAR A1M8 installation and routing | Confirm supplied adapter/cables, any additional cable length, strain relief, and printed mount | Inventory delivered accessories before purchasing additional cables; mount remains needed |
 
 ## Power, safety, and integration items to confirm
 

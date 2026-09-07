@@ -89,6 +89,7 @@ void readSerialFrames()
       break;
     case RosSerialProtocol::ParseResult::Overflow:
       gLatchedStatusBits |= kStatusReceiveOverflow;
+      RobotDrive::stop();
       break;
     case RosSerialProtocol::ParseResult::BadFormat:
       gLatchedStatusBits |= kStatusBadFormat;

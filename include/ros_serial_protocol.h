@@ -139,9 +139,11 @@ public:
     }
     if (byte != '\n')
     {
-      if (length_ + 1 >= sizeof(buffer_))
+      if (!overflowed_ && length_ + 1 >= sizeof(buffer_))
       {
         overflowed_ = true;
+        // Report immediately even if the host never terminates the frame.
+        return ParseResult::Overflow;
       }
       else if (!overflowed_)
       {

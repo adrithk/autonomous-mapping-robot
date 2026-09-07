@@ -63,6 +63,16 @@ int main()
   oversized += '\n';
   assert(feed(parser, oversized, command) == ParseResult::Overflow);
 
+  assert(feed(parser, std::string(kMaximumFrameLength - 1, 'A'), command) ==
+         ParseResult::Incomplete);
+  assert(parser.push('A', command) == ParseResult::Overflow);
+  // A command appended to an overflowed frame must be discarded through newline.
+  assert(feed(parser, checkedFrame("C,1,45,100,100"), command) ==
+         ParseResult::Overflow);
+  assert(feed(parser, checkedFrame("C,1,46,100,100"), command) ==
+         ParseResult::CommandReady);
+  assert(command.sequence == 46);
+
   assert(isNewerSequence(11, 10));
   assert(!isNewerSequence(10, 10));
   assert(!isNewerSequence(9, 10));
