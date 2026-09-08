@@ -56,3 +56,12 @@ Committed as 79e9217 and 9b260fb; pushed successfully to
 `https://github.com/adrithk/autonomous-mapping-robot` branch `main` on 2026-09-07.
 GitHub verified the signed-in owner/admin and public visibility for both repositories.
 Presentation acceptance is complete. Physical and autonomous-mapping plans remain active.
+
+## Showcase revision — 2026-09-07
+
+At the owner's request, replaced the README media table with “Demo: To Be Uploaded”
+below engineering highlights, removed public setup tutorials, and expanded the
+ROS 2, SLAM Toolbox and Nav2 final-design description. Nav2 integration remains
+explicitly pending in the implementation status. Showcase scope is one or two rooms
+and one video; removed the unused third-room placeholder. Existing technical guides
+and all source functionality are preserved. Markdown links and diff checks passed.

@@ -174,7 +174,7 @@ operator selecting navigation goals.
 
 ### 8. Validate the finished behavior
 
-- Repeat mapping in at least three bounded indoor environments.
+- Repeat mapping in one or two bounded indoor environments.
 - Record maps, bags/logs, configuration, commit, hardware revision, completion
   reason, run time, interventions, and failures.
 - Repeat the same environment twice to assess map consistency.

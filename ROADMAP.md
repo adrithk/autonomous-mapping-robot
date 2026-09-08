@@ -14,7 +14,7 @@ The mission is autonomous fresh-zone indoor mapping without an IMU.
 | SLAM and manual map export | Simulation launch/configuration implemented; audit records initial map receipt | Repeatable runtime, loop consistency and saved YAML/image |
 | Real LiDAR and TF | Provisional model and hardware identified | Driver, final mount, scans and clock/frame checks |
 | Autonomous exploration | Planned | Frontier selection, Nav2 execution, completion and automatic map saving |
-| Project showcase | README, documentation and upload slots prepared | Finished robot photo, video, three room maps and measured results |
+| Project showcase | README, documentation and upload slots prepared | Finished robot photo, video, maps from one or two rooms and measured results |
 
 ## Finish in this order
 
@@ -26,7 +26,7 @@ The mission is autonomous fresh-zone indoor mapping without an IMU.
 4. Integrate the physical LiDAR, odometry/TF and manually driven mapping.
 5. Implement and validate autonomous exploration and automatic map saving through
    bounded plans following the [ROS platform sequence](docs/ros-platform-roadmap.md).
-6. Record three representative room trials and fill the [showcase checklist](docs/project-completion.md).
+6. Record representative trials in one or two rooms and fill the [showcase checklist](docs/project-completion.md).
 
 Completion requires dated evidence of the autonomous mission ending with the
 robot stopped and a saved map, including repeated runs of the same environment.
