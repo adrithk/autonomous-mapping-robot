@@ -170,6 +170,16 @@ class ModelChecks(unittest.TestCase):
 
     def test_obstacle_room_clearance(self):
         world = ET.parse(ROOT/'worlds/test_room.sdf').getroot().find('world')
+        # Four touching wall corners enclose a 2.9 m clear interior.
+        walls = {m.attrib['name']: m for m in world.findall('model')}
+        for name, expected in {'north': (0, 1.5), 'south': (0, -1.5),
+                               'east': (1.5, 0), 'west': (-1.5, 0)}.items():
+            item = walls[name]
+            self.assertEqual(tuple(map(float, item.find('pose').text.split()[:2])), expected)
+            size = tuple(map(float, item.find('link/collision/geometry/box/size').text.split()))
+            self.assertEqual(size, (3.1, .1, .5) if name in ('north', 'south') else (.1, 3.1, .5))
+            self.assertEqual(item.find('link/visual/geometry/box/size').text,
+                             item.find('link/collision/geometry/box/size').text)
         boxes = []
         for item in world.findall('model'):
             if item.attrib['name'] != 'obstacle' and not item.attrib['name'].startswith('box_'):
@@ -181,7 +191,7 @@ class ModelChecks(unittest.TestCase):
                              item.find('link/collision/geometry/box/size').text)
             self.assertAlmostEqual(z, sz/2)
             box = (x-sx/2, x+sx/2, y-sy/2, y+sy/2)
-            self.assertTrue(all(abs(v) < 1.75 for v in box))
+            self.assertTrue(all(abs(v) < 1.10 for v in box))
             # Keep a 0.45 m square around the spawn point clear.
             self.assertTrue(box[0] > .225 or box[1] < -.225 or box[2] > .225 or box[3] < -.225)
             boxes.append(box)

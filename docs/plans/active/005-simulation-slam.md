@@ -32,3 +32,15 @@ the project README and [dated record](../../../results/2026-09-08-simulated-lida
 This establishes initial simulated SLAM visualization. Capture revision, repeatable
 startup, loop consistency and map export remain unverified; the plan stays active.
 Image integrity, local documentation links and diff whitespace checks passed.
+
+## Compact room — September 8
+
+User confirmed interactive WSL SLAM works (Gazebo, RViz, driving and updating map).
+See the dated result. Requested smaller enclosure: reduce wall-center span from
+4 m to 3 m, floor from 6 m to 3.1 m, retain four 0.5 m high walls and six obstacles.
+Reposition and resize obstacles to preserve clear spawn and wall clearance.
+Existing geometry tests now check enclosure dimensions as well as obstacle bounds.
+All eight offline model/configuration checks passed, including wall geometry,
+obstacle bounds/nonoverlap and spawn clearance; git diff --check passed.
+ROS/Gazebo is unavailable on this Mac; revised room needs a PC smoke test. Nav2 explanation
+is planning only, with no Nav2 implementation in this change.

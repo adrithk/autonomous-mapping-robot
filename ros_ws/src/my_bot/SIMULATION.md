@@ -55,7 +55,7 @@ source install/setup.bash
 ros2 launch my_bot bringup.launch.py
 ```
 
-The world is a local 4 m room with six interior box obstacles and requires no remote model
+The world is a local 3 m room (2.9 m clear interior between 0.1 m thick walls) with six interior box obstacles and requires no remote model
 downloads. The launch starts Gazebo running, publishes the description, spawns
 the model, starts the joint-state broadcaster and then the drive controller.
 It bridges only `/clock` and `/scan`. ros2_control owns joint states and odometry;

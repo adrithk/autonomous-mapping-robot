@@ -16,3 +16,12 @@ physical robot validation. Those acceptance checks remain in
 [plan 005](../docs/plans/active/005-simulation-slam.md).
 
 The original screenshot is preserved unchanged; source/copy SHA-256 checks matched.
+
+## User confirmation in chat — September 8
+
+The operator explicitly confirmed Gazebo and RViz opened, WASD moved the robot,
+and the map updated while driving. This supports a successful interactive WSL
+simulation SLAM run. Exact running revision and test output were not supplied.
+The earlier RViz issue did not prevent this reported run; its root cause remains
+undetermined. Map export, full coverage and physical validation remain pending.
+This confirmation precedes the smaller-room revision below.
