@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "wheel_speed_controller.h"
+#include "encoder_count_math.h"
 
 namespace
 {
@@ -118,7 +119,7 @@ void IRAM_ATTR onLeftEncoderAChange()
   const bool encoderA = digitalRead(kLeftEncoderAPin);
   const bool encoderB = digitalRead(kLeftEncoderBPin);
   portENTER_CRITICAL_ISR(&gEncoderMux);
-  gLeftEncoderCount += (encoderA == encoderB) ? 1 : -1;
+  gLeftEncoderCount = encoderStep(gLeftEncoderCount, encoderA == encoderB);
   portEXIT_CRITICAL_ISR(&gEncoderMux);
 }
 
@@ -127,7 +128,7 @@ void IRAM_ATTR onRightEncoderAChange()
   const bool encoderA = digitalRead(kRightEncoderAPin);
   const bool encoderB = digitalRead(kRightEncoderBPin);
   portENTER_CRITICAL_ISR(&gEncoderMux);
-  gRightEncoderCount += (encoderA == encoderB) ? 1 : -1;
+  gRightEncoderCount = encoderStep(gRightEncoderCount, encoderA == encoderB);
   portEXIT_CRITICAL_ISR(&gEncoderMux);
 }
 
@@ -143,9 +144,9 @@ void updateController(uint32_t nowMs)
   const float elapsedSeconds = elapsedMs / 1000.0f;
   const EncoderCounts counts = readEncoderCounts();
   gLeftMeasuredSpeed =
-      (counts.left - gPreviousLeftEncoderCount) / elapsedSeconds;
+      encoderDelta(counts.left, gPreviousLeftEncoderCount) / elapsedSeconds;
   gRightMeasuredSpeed =
-      (counts.right - gPreviousRightEncoderCount) / elapsedSeconds;
+      encoderDelta(counts.right, gPreviousRightEncoderCount) / elapsedSeconds;
   gPreviousLeftEncoderCount = counts.left;
   gPreviousRightEncoderCount = counts.right;
 
