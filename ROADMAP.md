@@ -11,7 +11,7 @@ The mission is autonomous fresh-zone indoor mapping without an IMU.
 | Serial v2 transport | Firmware and host implemented; native tests recorded | Live USB, disconnect/watchdog/reconnect trials |
 | ROS model and hardware plugin | Included in `ros_ws/src/my_bot` | Jazzy build/test record, plugin loading and physical integration |
 | Gazebo driving and simulated LiDAR | Initial WSL demonstration recorded | Revision-pinned repeatable startup and measured odometry |
-| SLAM and manual map export | Simulation launch/configuration implemented | Runtime map creation, loop consistency and saved YAML/image |
+| SLAM and manual map export | Simulation launch/configuration implemented; audit records initial map receipt | Repeatable runtime, loop consistency and saved YAML/image |
 | Real LiDAR and TF | Provisional model and hardware identified | Driver, final mount, scans and clock/frame checks |
 | Autonomous exploration | Planned | Frontier selection, Nav2 execution, completion and automatic map saving |
 | Project showcase | README, documentation and upload slots prepared | Finished robot photo, video, three room maps and measured results |
@@ -31,3 +31,8 @@ The mission is autonomous fresh-zone indoor mapping without an IMU.
 Completion requires dated evidence of the autonomous mission ending with the
 robot stopped and a saved map, including repeated runs of the same environment.
 Documentation preparation does not close these engineering acceptance gates.
+
+The [ROS audit record](ros_ws/src/my_bot/docs/results/2026-09-07-code-audit.md)
+reports an initial 79 × 79 map received by RViz and an unresolved rendering error.
+This is additional initial map-output evidence; map accuracy/export and autonomous
+mission acceptance remain pending.

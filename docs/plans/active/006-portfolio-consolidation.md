@@ -13,7 +13,7 @@ Existing physical acceptance plans remain active. No new robotics functionality.
 
 ## Acceptance
 
-- All 45 tracked source-package files retained; non-document files byte-identical.
+- All 47 tracked source-package files retained; non-document files byte-identical.
 - README, architecture, setup and status agree with the consolidated repository.
 - Demo, room photos/maps, measurements and reproducibility have upload instructions.
 - Independent recruiting review incorporated and links/available tests checked.
@@ -31,7 +31,7 @@ Independent recruiting/engineering review recommended a concise showcase README,
 explicit contribution attribution, minimal source movement, preserved provenance,
 consistent current-state documentation and practical media/evidence slots. Applied.
 
-- All 45 tracked package files retained from the recorded import commit.
+- All 47 tracked package files retained from the recorded import commit.
 - Every non-Markdown package file matches that commit byte for byte.
 - Eight model/configuration tests and three teleoperation tests passed.
 - Native controller, protocol, pseudo-terminal transport and firmware conformance tests passed.
@@ -40,9 +40,12 @@ consistent current-state documentation and practical media/evidence slots. Appli
 - colcon build/test/test-result unavailable: this Mac has no ROS installation.
 - No physical validation or SLAM runtime acceptance is claimed.
 
-A concurrent code audit changed firmware and the sibling package after the import.
-This task retains the recorded ROS snapshot and excludes those in-progress changes
-and the user's existing platformio.ini edit from its commit. The PlatformIO builds
-used the current working tree, including concurrent firmware edits; native imported
-package comparisons use the fixed source revision. No firmware behavior was edited
-by this documentation task.
+A concurrent code audit completed before this task committed: firmware rollover
+fixes are separately committed as 0119611, and the final ROS import matches
+my_bot 10c2beb58b34006a5841c2e3cba88462cb117117 (47 tracked files). Its new
+ROS-dependent hardware_plugin_test is retained but cannot run on this Mac.
+The final non-document files were compared byte for byte with that revision.
+The user's existing platformio.ini edit remains local and uncommitted.
+
+The initial recruiting review and follow-up review were applied, including corrected
+clone location, rosdep initialization, Xacro working directory and simulation status.
