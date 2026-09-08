@@ -1,6 +1,6 @@
 # Portfolio documentation and ROS consolidation
 
-Date: 2026-09-07. Status: documentation and import verified; Git delivery pending.
+Date: 2026-09-07. Status: complete.
 
 ## Scope
 
@@ -49,3 +49,10 @@ The user's existing platformio.ini edit remains local and uncommitted.
 
 The initial recruiting review and follow-up review were applied, including corrected
 clone location, rosdep initialization, Xacro working directory and simulation status.
+
+## Delivery
+
+Committed as 79e9217 and 9b260fb; pushed successfully to
+`https://github.com/adrithk/autonomous-mapping-robot` branch `main` on 2026-09-07.
+GitHub verified the signed-in owner/admin and public visibility for both repositories.
+Presentation acceptance is complete. Physical and autonomous-mapping plans remain active.
