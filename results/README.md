@@ -31,3 +31,7 @@ Pass | Fail | Inconclusive
 ```
 
 Use units for every measurement, preserve raw observations, and state pass/fail only against criteria written before the test. Link the result from its execution plan and from the roadmap when it changes milestone evidence.
+
+## Simulated SLAM
+
+- [Initial simulated LiDAR SLAM visualization — September 8, 2026](2026-09-08-simulated-lidar-slam.md)

@@ -46,6 +46,14 @@ The serial hardware interface checks acknowledgements and telemetry freshness, w
 
 ## Simulation code
 
+### Initial simulated LiDAR SLAM
+
+![Gazebo simulation on the left and the initial LiDAR SLAM occupancy map in RViz on the right](results/2026-09-08-simulated-lidar-slam/simulated-lidar-slam.png)
+
+**Left:** Gazebo shows the simulated robot and obstacles. **Right:** RViz displays the initial 2D occupancy map built with SLAM Toolbox from simulated LiDAR scans. Gray-green regions are unknown/unmapped, light gray regions are observed free space, and black cells mark detected occupied surfaces such as walls and obstacles. Red points overlay the current LiDAR returns. Areas hidden behind obstacles remain unmapped until observed from another viewpoint.
+
+[Initial implementation screenshot, supplied September 8, 2026](results/2026-09-08-simulated-lidar-slam.md).
+
 The [ROS package](ros_ws/src/my_bot/) contains the simulation and robot-specific integration developed for this project. Gazebo Harmonic models the differential-drive chassis in a room with six interior obstacles. Simulated wheel feedback feeds the ROS controllers, and a simulated LiDAR supplies scans for RViz visualization and SLAM Toolbox.
 
 The model uses shared geometry, separate simulation and hardware configurations, and an explicit choice of control backend. The simulation includes estimated masses, inertias, and contact properties; it supports software integration work while physical calibration is completed. A separate mapping launch adds SLAM Toolbox and occupancy-map visualization to the simulation.

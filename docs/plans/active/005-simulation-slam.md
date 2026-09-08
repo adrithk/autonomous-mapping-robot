@@ -1,6 +1,6 @@
 # Simulation SLAM Toolbox and obstacle room
 
-Date: 2026-09-07. Status: implemented; WSL runtime validation pending.
+Date: 2026-09-07. Status: implemented; initial occupancy-map visualization recorded; full runtime acceptance pending.
 
 Scope: extend the sibling my_bot test room to six interior boxes; add a separate
 slam_sim.launch.py using the standard Jazzy online_async_launch.py, /scan,
@@ -23,3 +23,12 @@ No firmware changes in this step. Physical watchdog and Pi integration remain pe
 The full ROS package is now in `ros_ws/src/my_bot` in this repository. Earlier
 sibling-package references are historical. Source behavior and pending physical
 acceptance are unchanged. See [current status](../../../ROADMAP.md).
+
+## Initial SLAM screenshot — 2026-09-08
+
+The owner supplied a screenshot showing Gazebo and an occupancy map with scan
+overlay in RViz. Added the unchanged image and a brief color/view explanation to
+the project README and [dated record](../../../results/2026-09-08-simulated-lidar-slam.md).
+This establishes initial simulated SLAM visualization. Capture revision, repeatable
+startup, loop consistency and map export remain unverified; the plan stays active.
+Image integrity, local documentation links and diff whitespace checks passed.

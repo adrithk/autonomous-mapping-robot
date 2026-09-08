@@ -11,7 +11,7 @@ The mission is autonomous fresh-zone indoor mapping without an IMU.
 | Serial v2 transport | Firmware and host implemented; native tests recorded | Live USB, disconnect/watchdog/reconnect trials |
 | ROS model and hardware plugin | Included in `ros_ws/src/my_bot` | Jazzy build/test record, plugin loading and physical integration |
 | Gazebo driving and simulated LiDAR | Initial WSL demonstration recorded | Revision-pinned repeatable startup and measured odometry |
-| SLAM and manual map export | Simulation launch/configuration implemented; audit records initial map receipt | Repeatable runtime, loop consistency and saved YAML/image |
+| SLAM and manual map export | Implemented; [initial simulated SLAM screenshot](results/2026-09-08-simulated-lidar-slam.md) records occupancy-map visualization | Repeatable runtime, loop consistency and saved YAML/image |
 | Real LiDAR and TF | Provisional model and hardware identified | Driver, final mount, scans and clock/frame checks |
 | Autonomous exploration | Planned | Frontier selection, Nav2 execution, completion and automatic map saving |
 | Project showcase | README, documentation and upload slots prepared | Finished robot photo, video, maps from one or two rooms and measured results |
