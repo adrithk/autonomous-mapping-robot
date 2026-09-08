@@ -11,7 +11,8 @@ when available; they can be added directly without redesigning the documentation
 - [ ] Photo/map pairs from one or two rooms, including original YAML + occupancy images and readable previews.
 - [ ] Dated results: room dimensions, mapping time, mapped area, map resolution, repeat runs/success count, and limitations.
 - [ ] Final parts/BOM with exact models, cost if known, power wiring, protection and calibration measurements.
-- [ ] Chassis CAD, STEP/STL exports, print settings, fasteners and assembly notes.
+- [x] Robot STEP and four STL files uploaded to `hardware/cad/`.
+- [ ] CAD revision, print settings, fasteners and assembly notes.
 - [ ] Reproducible Ubuntu/ROS setup and build/test output tied to the demonstrated commit.
 - [ ] Physical stop/watchdog/disconnect, odometry, LiDAR/TF and mapping acceptance records.
 - [ ] Scope of personal contributions and any additional collaborators or borrowed assets requiring credit.

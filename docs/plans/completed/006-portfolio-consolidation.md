@@ -65,3 +65,11 @@ ROS 2, SLAM Toolbox and Nav2 final-design description. Nav2 integration remains
 explicitly pending in the implementation status. Showcase scope is one or two rooms
 and one video; removed the unused third-room placeholder. Existing technical guides
 and all source functionality are preserved. Markdown links and diff checks passed.
+
+## CAD upload — 2026-09-07
+
+Added the owner-supplied robot STEP and chassis, caster mount, LiDAR holder and
+pillar STL files to `hardware/cad/`, preserving original filenames and bytes.
+Updated the CAD index and completion checklist. Source/destination SHA-256
+comparisons passed for all five files; no geometry or physical fit validation
+is claimed. Firmware and ROS functionality are unchanged.
