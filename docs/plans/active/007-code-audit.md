@@ -27,3 +27,9 @@ repeatable SLAM/RViz runtime validation remain pending; keep this plan active.
 Concurrent portfolio work introduced ros_ws/src/my_bot during this audit.
 The new plugin-loading test and audit report were also added there; existing
 portfolio documentation changes were preserved.
+
+## PC handoff
+
+Added docs/WSL_COPY_PASTE.md with consolidated-workspace update/build/test,
+SLAM, WASD, map export and bounded diagnostics. All Bash blocks passed syntax
+checking; Linux runtime and the rendering issue remain unverified.
