@@ -1,10 +1,22 @@
-# Engineering documentation
+# Documentation
 
-- [Robot parts list](../hardware/parts-list.md) records reported, missing, and not-yet-selected hardware without treating it as verified.
-- [Interfaces](interfaces.md) records subsystem contracts, units, frames, rates, and ownership.
-- [Testing](testing.md) separates automated checks from physical robot evidence.
-- [ROS 2 platform roadmap](ros-platform-roadmap.md) defines the intended Pi, `ros2_control`, LiDAR, SLAM, Nav2, exploration, and map-saving sequence.
-- [`plans/`](plans/) holds resumable active and completed work plans.
-- [`decisions/`](decisions/) holds durable architecture decision records.
+| Read this | For |
+|---|---|
+| [Project overview](../README.md) | Demo slots, engineering highlights and quick start |
+| [Architecture](../ARCHITECTURE.md) | System ownership, data flow and configuration |
+| [WSL / Ubuntu setup](../ros_ws/src/my_bot/WSL_SETUP.md) | Reproduce the simulation |
+| [SLAM and map export](../ros_ws/src/my_bot/SLAM.md) | Drive, inspect and save a map |
+| [Hardware bringup](../ros_ws/src/my_bot/HARDWARE.md) | Pi/ESP32 setup and bench checks |
+| [Interfaces](interfaces.md) | Protocol, units, frames and GPIOs |
+| [Testing](testing.md) | Automated and physical verification procedures |
+| [Parts list](../hardware/parts-list.md) | Hardware inventory and calibration provenance |
+| [Results](../results/README.md) | Dated evidence |
+| [Completion checklist](project-completion.md) | Photos, demo, maps and final measurements to supply |
+| [Roadmap](../ROADMAP.md) | Current implementation and remaining acceptance |
+| [ROS platform sequence](ros-platform-roadmap.md) | Preserved integration stages |
+| [Decisions](decisions/README.md) | Technical choices and rationale |
+| [Active plans](plans/active/) | Bounded work and historical progress |
 
-System ownership and current implementation state are in [`../ARCHITECTURE.md`](../ARCHITECTURE.md); capability status is in [`../ROADMAP.md`](../ROADMAP.md).
+The complete imported ROS package retains its original guides, license and evidence.
+[Import provenance](../ros_ws/README.md) records where it came from. Earlier dated
+plan entries are historical; use the current roadmap for status.

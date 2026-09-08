@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+    <xacro:macro name="controlled_wheel" params="side">
+      <joint name="${side}_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">${-wheel_velocity_limit}</param>
+          <param name="max">${wheel_velocity_limit}</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+    <xacro:controlled_wheel side="left"/>
+    <xacro:controlled_wheel side="right"/>
+  </ros2_control>
+  <gazebo>
+    <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg controllers_file)</parameters>
+    </plugin>
+  </gazebo>
+  <gazebo reference="left_wheel"><mu1>${wheel_friction}</mu1><mu2>${wheel_friction}</mu2></gazebo>
+  <gazebo reference="right_wheel"><mu1>${wheel_friction}</mu1><mu2>${wheel_friction}</mu2></gazebo>
+  <!-- The fixed support sphere slides as an inexpensive caster approximation. -->
+  <gazebo reference="caster"><mu1>${caster_friction}</mu1><mu2>${caster_friction}</mu2></gazebo>
+  <xacro:if value="$(arg include_lidar)">
+    <gazebo reference="laser_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+    <gazebo reference="laser">
+      <sensor name="lidar" type="gpu_lidar">
+        <always_on>true</always_on><visualize>false</visualize>
+        <update_rate>${scan_hz}</update_rate>
+        <topic>/scan</topic><gz_frame_id>laser</gz_frame_id>
+        <lidar>
+          <scan><horizontal>
+            <samples>${scan_samples}</samples><resolution>1</resolution>
+            <min_angle>${-pi}</min_angle><max_angle>${pi}</max_angle>
+          </horizontal></scan>
+          <range><min>${scan_min}</min><max>${scan_max}</max><resolution>0.01</resolution></range>
+          <noise type="gaussian"><mean>0</mean><stddev>${scan_noise}</stddev></noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:if>
+</robot>

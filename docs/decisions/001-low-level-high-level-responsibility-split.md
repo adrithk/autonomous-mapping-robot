@@ -11,7 +11,7 @@ The initial repository README describes a differential-drive robot with an ESP32
 
 The ESP32 will own direct motor outputs, encoder sampling, local wheel-speed control, command-loss handling, and immediate actuator-safe behavior. The ROS computer will own hardware bridging, robot model/TF coordination, sensor processing, state estimation, SLAM, localization, Nav2, and mission-level autonomy.
 
-ESP32 encoder-feedback wheel control now exists. The Pi transport, ROS packages, and autonomous mapping components remain planned. This record sets ownership; it does not assert that planned components are implemented.
+ESP32 encoder-feedback wheel control now exists. The Pi transport and ROS package source now exist in `ros_ws/src/my_bot`; autonomous mapping remains planned. This record sets ownership; it does not assert that planned components are implemented.
 
 ## Alternatives considered
 

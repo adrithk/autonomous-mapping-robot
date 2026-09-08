@@ -17,3 +17,9 @@ Acceptance remaining on WSL: update/build/test, start only slam_sim.launch.py,
 confirm SLAM active and /map plus map->odom, drive a loop around obstacles, inspect
 map consistency, save a YAML/image and record the result. Commands are in my_bot/SLAM.md.
 No firmware changes in this step. Physical watchdog and Pi integration remain pending.
+
+## Repository consolidation — 2026-09-07
+
+The full ROS package is now in `ros_ws/src/my_bot` in this repository. Earlier
+sibling-package references are historical. Source behavior and pending physical
+acceptance are unchanged. See [current status](../../../ROADMAP.md).

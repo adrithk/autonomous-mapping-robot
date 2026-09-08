@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Builder-reported dimensions, 2026-09-06, after motor relocation. -->
+  <xacro:property name="wheel_radius" value="0.040"/>
+  <xacro:property name="wheel_separation" value="0.205"/>
+  <xacro:property name="outer_width" value="0.215"/>
+  <!-- Inferred from outer width minus separation; assumes identical tires. -->
+  <xacro:property name="wheel_width" value="${outer_width - wheel_separation}"/>
+  <xacro:property name="front_extent" value="0.180"/>
+  <xacro:property name="rear_extent" value="0.080"/>
+  <!-- User-authorized clearance assumption; not a physical measurement. -->
+  <xacro:property name="chassis_clearance" value="0.040"/>
+  <!-- Visual approximations, not measured chassis/caster geometry. -->
+  <xacro:property name="plate_thickness" value="0.005"/>
+  <xacro:property name="caster_radius" value="0.020"/>
+</robot>

@@ -1,6 +1,6 @@
 # ROS-ready ESP32 transport and selectable firmware builds
 
-**Status:** Active — next implementation task
+**Status:** Source implemented — physical acceptance pending
 **Owner:** Builder with Codex implementation support
 **Created:** 2026-09-04
 **Updated:** 2026-09-07
@@ -14,7 +14,7 @@ logic before depending on Raspberry Pi or ROS installation.
 
 ## Current State
 
-`src/main.cpp` is the only Arduino entry point. It implements keyboard commands,
+`src/main.cpp` is the keyboard Arduino entry point; `src/main_ros.cpp` is separately selected. It implements keyboard commands,
 encoder acquisition, 50 Hz wheel control, PID/feed-forward, target ramps, PWM output,
 and timeouts. It builds and its controller unit test passes. A raised-wheel test of
 the preceding 400 ms straight ramp showed stable +/-3000 counts/s tracking. The
@@ -22,7 +22,7 @@ current 300 ms straight and 100 ms turn ramps still require physical validation.
 
 `main_ros.cpp`, the framed protocol, parser tests, the second PlatformIO environment,
 now exist and pass automated checks. They have not been
-physically tested. No ROS workspace or ROS package exists.
+physically tested. The ROS package is included at `ros_ws/src/my_bot`; see plan 004.
 
 ## Inputs
 
@@ -186,3 +186,9 @@ Automated build and unit checks passed on 2026-09-05. No hardware result exists 
 
 2026-09-07: Pi plugin source now exists in sibling my_bot; see active plan 004.
 Its offline tests do not satisfy this plan's physical watchdog/reconnect criteria.
+
+## Repository consolidation — 2026-09-07
+
+The full ROS package is now in `ros_ws/src/my_bot` in this repository. Earlier
+sibling-package references are historical. Source behavior and pending physical
+acceptance are unchanged. See [current status](../../../ROADMAP.md).

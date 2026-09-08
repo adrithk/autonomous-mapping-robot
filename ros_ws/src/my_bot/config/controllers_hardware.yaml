@@ -1,0 +1,39 @@
+# Hardware defaults. Geometry must match dimensions.xacro (checked by tests).
+# Speed/acceleration/covariance values are estimates, not hardware acceptance limits.
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+    use_sim_time: false
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+diff_drive_controller:
+  ros__parameters:
+    use_sim_time: false
+    left_wheel_names: [left_wheel_joint]
+    right_wheel_names: [right_wheel_joint]
+    wheel_separation: 0.205
+    wheel_radius: 0.04
+    position_feedback: true
+    open_loop: false
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: base_link
+    enable_odom_tf: true
+    cmd_vel_timeout: 0.25
+    pose_covariance_diagonal: [0.01, 0.01, 1000.0, 1000.0, 1000.0, 0.05]
+    twist_covariance_diagonal: [0.01, 0.01, 1000.0, 1000.0, 1000.0, 0.05]
+    linear.x.max_velocity: 0.15
+    linear.x.min_velocity: -0.15
+    linear.x.max_acceleration: 0.3
+    linear.x.max_deceleration: -0.3
+    angular.z.max_velocity: 0.75
+    angular.z.min_velocity: -0.75
+    angular.z.max_acceleration: 1.5
+    angular.z.max_deceleration: -1.5
+
+joint_state_broadcaster:
+  ros__parameters:
+    use_sim_time: false

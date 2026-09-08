@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mapping_robot">
+  <!-- SI units. +X points toward the front caster; +Y is left; +Z is up.
+       base_link is on the floor beneath the drive-axle midpoint.
+       Inertias are estimated for simulation; they do not establish real dynamics. -->
+  <xacro:include filename="dimensions.xacro"/>
+  <xacro:include filename="simulation_parameters.xacro"/>
+  <xacro:arg name="simulation" default="false"/>
+  <xacro:arg name="hardware" default="false"/>
+  <xacro:arg name="serial_device" default=""/>
+  <xacro:arg name="controllers_file" default=""/>
+  <xacro:arg name="include_lidar" default="true"/>
+  <xacro:arg name="laser_x" default="0.0"/>
+  <xacro:arg name="laser_y" default="0.0"/>
+  <xacro:arg name="laser_z" default="0.10"/>
+  <xacro:arg name="laser_yaw" default="0.0"/>
+
+  <material name="chassis_black"><color rgba="0.15 0.16 0.18 1"/></material>
+  <material name="tire_gray"><color rgba="0.35 0.36 0.38 1"/></material>
+  <material name="front_blue"><color rgba="0.1 0.5 0.9 1"/></material>
+  <link name="base_link"/>
+  <!-- A thin rectangular approximation of the whole length, including front
+       extension. Plate thickness is visual-only and unmeasured. -->
+  <link name="chassis">
+    <xacro:box_inertia mass="${total_mass - 2*wheel_mass - caster_mass - (laser_mass if '$(arg include_lidar)' == 'true' else 0)}"
+      x="${front_extent + rear_extent}" y="${wheel_separation - wheel_width}"
+      z="${body_inertia_height}" com_z="${body_com_z}"/>
+    <visual>
+      <geometry><box size="${front_extent + rear_extent} ${wheel_separation - wheel_width} ${plate_thickness}"/></geometry>
+      <material name="chassis_black"/>
+    </visual>
+    <collision>
+      <geometry><box size="${front_extent + rear_extent} ${wheel_separation - wheel_width} ${plate_thickness}"/></geometry>
+    </collision>
+  </link>
+  <joint name="chassis_joint" type="fixed">
+    <parent link="base_link"/><child link="chassis"/>
+    <origin xyz="${(front_extent - rear_extent)/2} 0 ${chassis_clearance + plate_thickness/2}"/>
+  </joint>
+
+  <xacro:macro name="wheel" params="side sign">
+    <link name="${side}_wheel">
+      <xacro:cylinder_inertia mass="${wheel_mass}" radius="${wheel_radius}"
+        length="${wheel_width}" rpy="${pi/2} 0 0"/>
+      <visual>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="tire_gray"/>
+      </visual>
+      <collision>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+    </link>
+    <joint name="${side}_wheel_joint" type="continuous">
+      <parent link="base_link"/><child link="${side}_wheel"/>
+      <origin xyz="0 ${sign * wheel_separation/2} ${wheel_radius}"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="${wheel_torque_limit}" velocity="${wheel_velocity_limit}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:wheel side="left" sign="1"/>
+  <xacro:wheel side="right" sign="-1"/>
+
+  <!-- Fixed sphere depicts the front support; size/position are provisional. -->
+  <link name="caster">
+    <inertial><mass value="${caster_mass}"/>
+      <inertia ixx="${0.4*caster_mass*caster_radius**2}" ixy="0" ixz="0"
+        iyy="${0.4*caster_mass*caster_radius**2}" iyz="0" izz="${0.4*caster_mass*caster_radius**2}"/>
+    </inertial>
+    <visual><geometry><sphere radius="${caster_radius}"/></geometry><material name="front_blue"/></visual>
+    <collision><geometry><sphere radius="${caster_radius}"/></geometry></collision>
+  </link>
+  <joint name="caster_joint" type="fixed">
+    <parent link="base_link"/><child link="caster"/>
+    <origin xyz="${front_extent - caster_radius} 0 ${caster_radius}"/>
+  </joint>
+
+  <!-- Provisional user-authorized mount: centered, scan plane 6 cm above axles.
+       Body size is a visual approximation; confirm mount before real mapping. -->
+  <xacro:if value="$(arg include_lidar)">
+    <link name="laser">
+      <xacro:cylinder_inertia mass="${laser_mass}" radius="${laser_radius}"
+        length="${laser_body_height}" com_z="${-laser_body_height/2 - 0.002}"/>
+      <visual>
+        <!-- Keep the visual below the scan plane to avoid self-obstruction. -->
+        <origin xyz="0 0 ${-laser_body_height/2 - 0.002}"/>
+        <geometry><cylinder radius="${laser_radius}" length="${laser_body_height}"/></geometry>
+        <material name="front_blue"/>
+      </visual>
+    </link>
+    <joint name="laser_joint" type="fixed">
+      <parent link="base_link"/><child link="laser"/>
+      <origin xyz="$(arg laser_x) $(arg laser_y) $(arg laser_z)" rpy="0 0 $(arg laser_yaw)"/>
+    </joint>
+  </xacro:if>
+  <!-- Invalid dual-backend requests deliberately fail Xacro expansion. -->
+  <xacro:if value="$(arg simulation)">
+    <xacro:if value="$(arg hardware)"><xacro:invalid_dual_control_backend/></xacro:if>
+  </xacro:if>
+  <xacro:if value="$(arg hardware)">
+    <xacro:include filename="hardware.xacro"/>
+  </xacro:if>
+  <xacro:if value="$(arg simulation)">
+    <xacro:include filename="gazebo.xacro"/>
+  </xacro:if>
+</robot>

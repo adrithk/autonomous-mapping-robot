@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <ros2_control name="Esp32System" type="system">
+    <hardware>
+      <plugin>my_bot/Esp32System</plugin>
+      <param name="serial_device">$(arg serial_device)</param>
+      <!-- Feedback calibration must match firmware include/ros_wheel_units.h. -->
+      <param name="left_counts_per_revolution">4185</param>
+      <param name="right_counts_per_revolution">4185</param>
+    </hardware>
+    <xacro:macro name="hardware_wheel" params="side">
+      <joint name="${side}_wheel_joint">
+        <command_interface name="velocity"><param name="min">-6.0</param><param name="max">6.0</param></command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+    <xacro:hardware_wheel side="left"/>
+    <xacro:hardware_wheel side="right"/>
+  </ros2_control>
+</robot>

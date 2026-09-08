@@ -1,6 +1,6 @@
 # Robot parts list
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-07
 **Project stage:** ROS-ready ESP32 transport bench validation
 
 This is the source of truth for hardware believed to be on hand, still needed, or not yet selected. "On hand" means the part was reported by the builder; it does not mean its exact variant, electrical compatibility, wiring, or operation has been verified.
@@ -25,11 +25,11 @@ end; wheel radius 0.040 m; center separation 0.205 m; outside tire width 0.215 m
 axle-to-front 0.180 m and axle-to-back 0.080 m (total 0.260 m). Equal tire widths
 of 0.010 m are inferred, not measured. Chassis clearance 0.040 m is explicitly
 assumed by the builder. These replace the historical dimensions below for the
-preliminary model in `../my_bot`; final LiDAR mounting and encoder calibration
+preliminary model in `ros_ws/src/my_bot`; final LiDAR mounting and encoder calibration
 remain pending. The model's plate thickness and caster geometry are visual
 approximations, not physical measurements.
 
-**Geometry revision pending (2026-09-06):** the builder moved the motors. The
+**Historical geometry note (superseded by the updated inputs above):** the builder moved the motors. The
 previous wheel separation and footprint below are historical and must not be used
 for the new layout without confirmation. Ask the builder for updated wheel
 separation, axle position relative to the chassis, and outer footprint before

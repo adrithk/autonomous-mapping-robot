@@ -45,3 +45,9 @@ remain open.
 records working WSL Gazebo/WASD and 10 Hz simulated LiDAR display, with photo.
 Initial simulation smoke testing is now observed; physical and SLAM acceptance
 remain pending. Exact PC revision and repeatable startup have not been recorded.
+
+## Repository consolidation — 2026-09-07
+
+The full ROS package is now in `ros_ws/src/my_bot` in this repository. Earlier
+sibling-package references are historical. Source behavior and pending physical
+acceptance are unchanged. See [current status](../../../ROADMAP.md).

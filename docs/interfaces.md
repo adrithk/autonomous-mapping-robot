@@ -2,7 +2,7 @@
 
 Unknown values are deliberately marked `TBD`. Update this file in the same change as any interface modification.
 
-## Current USB serial motor command interface
+## Keyboard serial command interface
 
 **Owner:** `src/main.cpp` on the ESP32  
 **Transport:** Arduino `Serial` over the board's serial connection  
@@ -77,7 +77,7 @@ Pin assignments, gains, limits, and polarity are shared by both firmware entry p
 **ESP32 watchdog:** 250 ms from the last valid, newer command frame
 **Telemetry rate:** 20 Hz
 **Wire units:** commands in wheel rad/s; feedback remains encoder counts and counts/s.
-The ESP32 converts commands; the future Pi plugin converts feedback to radians and rad/s.
+The ESP32 converts commands; the Pi plugin converts feedback to radians and rad/s.
 
 Every payload is followed by `*HHHH\n`, where `HHHH` is four uppercase hexadecimal
 digits containing CRC-16/CCITT-FALSE over every ASCII byte before `*` (polynomial
@@ -107,10 +107,10 @@ calibration acceptance test. Conversion is `counts/s = rad/s * 4185 / (2*pi)`;
 `4000 * 2*pi / 4185` rad/s (approximately 6.0054). Shared PID and keyboard units
 remain counts/s. Invalid values do not acknowledge a sequence or renew the lease.
 
-The future Pi plugin must send wheel rad/s directly in `C,2` frames with CRC and
+The Pi plugin sends wheel rad/s directly in `C,2` frames with CRC and
 new sequence numbers, and convert raw `S,2` feedback using `2*pi / 4185`.
-It must handle count wraparound, reboot/reset, stale telemetry, reconnect and safe
-activation/deactivation; changing command units does not implement that plugin.
+It implements count wraparound, reboot/reset, stale telemetry, reconnect and
+activation/deactivation checks; physical validation remains pending.
 A USB reconnect without an ESP32 reboot retains the last sequence: the host must
 synchronize rather than assume its sequence can restart at zero.
 
@@ -132,73 +132,39 @@ Status bits are latched until reboot in this first implementation:
 | 5 | `0x0020` | Duplicate or stale sequence |
 
 This protocol builds and has parser/CRC unit tests, but it has not been uploaded or
-bench-tested. The Pi-side `ros2_control` plugin does not exist yet.
+bench-tested. The Pi-side plugin is included under `ros_ws/src/my_bot`.
 
 ## ROS 2 interfaces
 
-**Latest preliminary model inputs (2026-09-06):** wheel radius 0.040 m, wheel
-separation 0.205 m, outer width 0.215 m, front/rear extents from axle 0.180/0.080 m.
-These supersede the historical geometry below. The sibling `my_bot` description
-places `base_link` at floor height beneath the drive-axle midpoint, +X toward the
-front caster. Chassis clearance 0.040 m is assumed; tire width 0.010 m is inferred
-for identical tires. LiDAR now uses a user-authorized provisional centered mount: scan plane 0.10 m above the floor (interpreting 6 cm above wheels as above their axles), level with yaw zero. Confirm before actual mapping. No robot
-hardware plugin or operational odometry is provided by that description package.
+The package is `ros_ws/src/my_bot`. Its `my_bot/Esp32System` plugin exports two
+wheel rad/s command interfaces and radians/rad/s state interfaces. The configured
+`diff_drive_controller` receives `geometry_msgs/msg/TwistStamped` at
+`/diff_drive_controller/cmd_vel`, publishes `/diff_drive_controller/odom`, and owns
+`odom -> base_link`. The ESP32 remains a non-ROS serial endpoint.
 
-**2026-09-06 motor relocation:** the geometry below predates a motor placement
-change. Before implementing/configuring ROS body-velocity conversion or wheel
-odometry, ask the builder for updated wheel separation and axle/chassis offsets;
-confirm footprint and LiDAR mounting offsets before TF/navigation configuration.
-Do not use the old 0.233 m separation for the new layout. ESP32 counts/s commands
-are independent of motor mounting position.
+Preliminary geometry is wheel radius 0.040 m, separation 0.205 m, outer width
+0.215 m, front/rear axle extents 0.180/0.080 m. These supersede the historical
+0.233 m separation. `base_link` is at floor height under the axle midpoint; +X
+points toward the front caster, +Y left, +Z up. The provisional laser scan plane
+is centered at z=0.10 m, level/yaw zero. Final loaded dimensions remain uncalibrated.
 
-Builder-reported geometry (2026-09-05): wheel separation **0.233 m**, wheel radius
-**0.040 m**. Measurement procedure and final-payload loaded radius are unverified;
-encoder counts per wheel revolution remain `TBD` for both wheels. These are
-provisional inputs for future ROS configuration, not calibrated acceptance evidence.
+ROS bringup defaults to Gazebo; `mode:=hardware` requires `serial_device` explicitly.
+Hardware uses wall time; simulation uses `/clock`. The host requires fresh v2
+telemetry and an acknowledged stop at startup. Telemetry or ACK stalls above 200 ms,
+new status faults, reboot/time regression or I/O failure fault control and attempt
+a stop. Reconnection is deliberate. Previously latched firmware bits are logged;
+repeated occurrences of the same bit are not observable. The ESP32 watchdog remains
+independent. See [hardware operation](../ros_ws/src/my_bot/HARDWARE.md).
 
-No ROS workspace or ROS node exists. The accepted design is a Pi-side custom
-`hardware_interface::SystemInterface` connected to the ESP32 protocol above. The
-standard Jazzy `diff_drive_controller` will subscribe to its
-`~/cmd_vel` `geometry_msgs/msg/TwistStamped` input, expose wheel velocity command
-interfaces, consume wheel position/velocity state, publish odometry, and initially
-publish `odom -> base_link`. The ESP32 is not a ROS subscriber; it is the serial motor
-controller behind the ROS hardware plugin.
+## TF and mapping
 
-Before adding a ROS bridge, specify at minimum:
+Configured tree: `map -> odom -> base_link -> laser`. SLAM Toolbox owns
+`map -> odom` in the separate SLAM launch; diff_drive_controller owns `odom -> base_link`;
+robot_state_publisher owns robot link transforms. The simulated scanner publishes
+`/scan` in `laser` at 10 Hz; the physical LiDAR driver remains to be integrated.
+SLAM uses simulation time and 0.05 m/cell resolution. Manual map export saves YAML
+and an occupancy image. Autonomous exploration and automatic map saving are planned.
 
-- measured encoder counts/revolution, loaded wheel radius, and wheel separation;
-- serial device identity, reconnect policy, and ROS diagnostic mapping;
-- encoder/odometry publication ownership and covariance;
-- controller namespace/remappings and final command limits.
-
-Prefer standard ROS message types at the ROS boundary. Do not invent a custom service or action when standard ROS 2 or Nav2 interfaces already express the operation.
-
-## TF frames and coordinate conventions
-
-No transforms are published. The planned tree is `map -> odom -> base_link -> laser`:
-SLAM Toolbox owns `map -> odom`, `diff_drive_controller` initially owns
-`odom -> base_link`, and robot state publisher owns the fixed `base_link -> laser`
-mount transform. Exact geometry, frame parameters, and REP-103/REP-105 validation
-remain future ROS-workspace tasks.
-
-## Pi-side hardware implementation update — 2026-09-07
-
-The sibling `/Users/adrithk/Developer/my_bot` package now implements a C++
-`my_bot/Esp32System` ros2_control SystemInterface and version-2 POSIX USB transport.
-It exports wheel rad/s commands and radians/rad/s state, with preliminary 4185
-counts/revolution feedback calibration. Default bringup selects Gazebo; real control
-requires `mode:=hardware` and an explicit serial_device. The two models cannot be
-selected together. Hardware uses wall time; simulation and its teleop use /clock.
-
-Startup requires fresh v2 telemetry and an acknowledged explicit stop. Runtime
-telemetry/ACK stalls over 200 ms, new firmware status faults, reboot/time regression
-or I/O failure fault control and attempt a stop. No automatic reconnection/replay.
-The independent ESP32 250 ms watchdog remains required. Previously latched firmware
-status bits are logged; repeated occurrences of the same bit are not observable.
-See sibling HARDWARE.md and WSL_SETUP.md for operation and limitations.
-
-Offline model/configuration and pseudo-terminal transport tests passed, including
-compatibility with this repository's actual firmware parser/state formatter.
-ROS plugin compilation/loading, Gazebo/WSL launch and physical validation remain
-pending. This source implementation supersedes earlier statements that the Pi-side
-plugin is absent; it does not advance hardware/integrated acceptance milestones.
+Offline transport/model checks and initial user-observed simulation are recorded.
+Physical timing, calibrated odometry, SLAM map export and integrated mission
+acceptance remain pending; see [testing](testing.md) and [roadmap](../ROADMAP.md).

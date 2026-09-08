@@ -15,10 +15,10 @@ Verification has distinct levels. Always report the highest level actually compl
 Run from the repository root:
 
 ```sh
-pio run
+pio run -e keyboard -e ros_serial
 ```
 
-The original firmware build passed on 2026-09-01. On 2026-09-04, the wheel-speed controller test and firmware build passed after PID integration. On 2026-09-05, the `keyboard` and `ros_serial` firmware environments built and the wheel-controller and ROS-serial protocol tests passed. No CI workflow, ROS workspace, launch files, or ROS configuration validators currently exist.
+The original firmware build passed on 2026-09-01. On 2026-09-04, the wheel-speed controller test and firmware build passed after PID integration. On 2026-09-05, the `keyboard` and `ros_serial` firmware environments built and the wheel-controller and ROS-serial protocol tests passed. The ROS package, launch/configuration files and offline validators now exist under `ros_ws/src/my_bot`; no CI workflow is configured.
 
 ### Checks to add with relevant features
 
@@ -30,11 +30,12 @@ The original firmware build passed on 2026-09-01. On 2026-09-04, the wheel-speed
 - Planner/mission state-machine tests when custom behavior exists.
 - Static analysis and formatting only when configured intentionally for the project.
 
-For future ROS changes, run the applicable package-scoped or workspace commands:
+For ROS changes, run the applicable package-scoped or workspace commands:
 
 ```sh
-colcon build
-colcon test
+cd ros_ws
+colcon build --packages-select my_bot
+colcon test --packages-select my_bot
 colcon test-result --verbose
 ```
 
@@ -86,3 +87,16 @@ clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude test/wheel_speed_controller_t
 
 These cover parsing/conversion and controller logic, not live USB timing or ROS.
 No physical or ROS integration result is claimed.
+
+## Imported ROS package checks
+
+From `ros_ws/src/my_bot`, follow [VALIDATION.md](../ros_ws/src/my_bot/VALIDATION.md)
+for native serial/conformance checks. Use a Python environment with Xacro and PyYAML:
+
+```sh
+python3 test/test_model.py
+python3 test/test_teleop.py
+```
+
+ROS-dependent compilation and plugin loading require Ubuntu/ROS; native tests
+cannot substitute for `colcon build`, `colcon test` and physical acceptance.

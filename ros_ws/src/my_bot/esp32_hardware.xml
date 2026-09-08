@@ -1,0 +1,5 @@
+<library path="esp32_hardware">
+  <class name="my_bot/Esp32System" type="my_bot::Esp32System" base_class_type="hardware_interface::SystemInterface">
+    <description>ESP32 USB serial v2 wheel rad/s commands and encoder feedback.</description>
+  </class>
+</library>

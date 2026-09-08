@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- All values here are simulation estimates, NOT measured motor/sensor specs. -->
+  <xacro:property name="total_mass" value="1.6"/>
+  <xacro:property name="wheel_mass" value="0.08"/>
+  <xacro:property name="caster_mass" value="0.04"/>
+  <xacro:property name="laser_mass" value="0.17"/>
+  <xacro:property name="laser_radius" value="0.035"/>
+  <xacro:property name="laser_body_height" value="0.025"/>
+  <xacro:property name="body_inertia_height" value="0.08"/>
+  <xacro:property name="body_com_z" value="0.03"/>
+  <xacro:property name="wheel_torque_limit" value="0.3"/>
+  <xacro:property name="wheel_velocity_limit" value="12.5"/>
+  <xacro:property name="wheel_friction" value="0.8"/>
+  <xacro:property name="caster_friction" value="0.001"/>
+  <xacro:property name="scan_hz" value="10"/>
+  <xacro:property name="scan_samples" value="360"/>
+  <xacro:property name="scan_min" value="0.15"/>
+  <xacro:property name="scan_max" value="6.0"/>
+  <xacro:property name="scan_noise" value="0.01"/>
+
+  <xacro:macro name="box_inertia" params="mass x y z com_z:=0">
+    <inertial>
+      <origin xyz="0 0 ${com_z}"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(y*y+z*z)/12}" ixy="0" ixz="0"
+               iyy="${mass*(x*x+z*z)/12}" iyz="0" izz="${mass*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+  <xacro:macro name="cylinder_inertia" params="mass radius length rpy:='0 0 0' com_z:=0">
+    <inertial>
+      <origin xyz="0 0 ${com_z}" rpy="${rpy}"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(3*radius*radius+length*length)/12}" ixy="0" ixz="0"
+               iyy="${mass*(3*radius*radius+length*length)/12}" iyz="0" izz="${mass*radius*radius/2}"/>
+    </inertial>
+  </xacro:macro>
+</robot>

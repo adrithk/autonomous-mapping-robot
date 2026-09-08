@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<sdf version="1.9"><world name="test_room">
+  <physics name="physics" type="ignored"><max_step_size>0.001</max_step_size><real_time_factor>1</real_time_factor></physics>
+  <gravity>0 0 -9.81</gravity>
+  <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+  <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+  <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+  <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+  <light name="sun" type="directional">
+    <pose>0 0 10 0 0 0</pose><direction>-0.5 0.1 -0.9</direction>
+    <diffuse>0.9 0.9 0.9 1</diffuse><specular>0.2 0.2 0.2 1</specular><cast_shadows>true</cast_shadows>
+  </light>
+  <model name="floor"><static>true</static><pose>0 0 -0.05 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>6 6 0.1</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>6 6 0.1</size></box></geometry>
+      <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+    </visual></link></model>
+  <model name="north"><static>true</static><pose>0 2 0.25 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>4.1 0.1 0.5</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>4.1 0.1 0.5</size></box></geometry>
+      <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+    </visual></link></model>
+  <model name="south"><static>true</static><pose>0 -2 0.25 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>4.1 0.1 0.5</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>4.1 0.1 0.5</size></box></geometry>
+      <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+    </visual></link></model>
+  <model name="east"><static>true</static><pose>2 0 0.25 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.1 4.1 0.5</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.1 4.1 0.5</size></box></geometry>
+      <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+    </visual></link></model>
+  <model name="west"><static>true</static><pose>-2 0 0.25 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.1 4.1 0.5</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.1 4.1 0.5</size></box></geometry>
+      <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+    </visual></link></model>
+  <model name="obstacle"><static>true</static><pose>1 0.7 0.2 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.4 0.5 0.4</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.4 0.5 0.4</size></box></geometry>
+      <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+    </visual></link></model>
+  <model name="box_northwest"><static>true</static><pose>-1.15 0.95 0.225 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.45 0.5 0.45</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.45 0.5 0.45</size></box></geometry>
+      <material><ambient>0.2 0.5 0.8 1</ambient><diffuse>0.2 0.5 0.8 1</diffuse></material>
+    </visual></link></model>
+  <model name="box_southwest"><static>true</static><pose>-1.2 -0.9 0.175 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.5 0.4 0.35</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.5 0.4 0.35</size></box></geometry>
+      <material><ambient>0.8 0.4 0.2 1</ambient><diffuse>0.8 0.4 0.2 1</diffuse></material>
+    </visual></link></model>
+  <model name="box_south"><static>true</static><pose>0 -1.2 0.25 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.45 0.35 0.5</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.45 0.35 0.5</size></box></geometry>
+      <material><ambient>0.4 0.7 0.3 1</ambient><diffuse>0.4 0.7 0.3 1</diffuse></material>
+    </visual></link></model>
+  <model name="box_southeast"><static>true</static><pose>0.8 -0.65 0.2 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.35 0.5 0.4</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.35 0.5 0.4</size></box></geometry>
+      <material><ambient>0.7 0.3 0.6 1</ambient><diffuse>0.7 0.3 0.6 1</diffuse></material>
+    </visual></link></model>
+  <model name="box_north"><static>true</static><pose>0.1 1.15 0.15 0 0 0</pose><link name="body">
+    <collision name="collision"><geometry><box><size>0.55 0.3 0.3</size></box></geometry></collision>
+    <visual name="visual"><geometry><box><size>0.55 0.3 0.3</size></box></geometry>
+      <material><ambient>0.8 0.7 0.2 1</ambient><diffuse>0.8 0.7 0.2 1</diffuse></material>
+    </visual></link></model>
+</world></sdf>

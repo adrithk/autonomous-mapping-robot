@@ -1,8 +1,8 @@
 # ROS 2 platform roadmap
 
-**Status:** Planned; no ROS workspace exists yet
+**Status:** Integration sequence; firmware, ROS plugin, simulation and simulation SLAM source exist. Physical integration and autonomy remain pending.
 **Target:** Raspberry Pi running 64-bit Ubuntu 24.04 and ROS 2 Jazzy
-**Updated:** 2026-09-04
+**Updated:** 2026-09-07
 
 ## Product behavior
 
@@ -55,22 +55,13 @@ The ESP32 PID remains the innermost control loop. ROS requests motion; it does n
 replace the local motor controller. Loss of valid serial commands must stop the
 motors locally even if the Pi or ROS process fails.
 
-## Planned repository layout
+## Repository layout
 
-```text
-src/main.cpp                         keyboard/PID firmware entry point
-src/main_ros.cpp                     ROS-serial firmware entry point (planned)
-include/ and lib/                    shared drivetrain and protocol code
-platformio.ini                       keyboard and ros_serial build environments
-ros_ws/src/
-  mapping_robot_description/         URDF/Xacro, meshes, dimensions, TF
-  mapping_robot_hardware/            ros2_control serial SystemInterface
-  mapping_robot_bringup/             controller, LiDAR, SLAM, Nav2 configs/launch
-  mapping_robot_exploration/         selected/configured frontier exploration
-```
-
-Package names are planned names and may be adjusted once the ROS workspace is
-created. Do not create all packages during the ESP32 transport task.
+Firmware remains in `src/`, `include/`, and `test/`. The complete ROS package is
+`ros_ws/src/my_bot`, containing description, hardware transport, launch files,
+configuration, simulation worlds and tests. Keep this single package until a
+concrete need justifies splitting it. [Current capability status](../ROADMAP.md)
+distinguishes source implementation from the acceptance gates below.
 
 ## Implementation stages
 
