@@ -108,3 +108,10 @@ Sources: [Microsoft WSL GUI support](https://learn.microsoft.com/en-us/windows/w
 
 Follow [SLAM.md](SLAM.md) to update, install SLAM Toolbox, launch simulation mapping
 and save the resulting occupancy map.
+
+## Nav2 click-to-go navigation
+
+For navigation while SLAM maps, use [NAVIGATION.md](NAVIGATION.md) and the
+[updated copy/paste workflow](../../../docs/WSL_COPY_PASTE.md). Stop manual teleop
+and the old launch first; run only `nav_sim.launch.py`. Runtime validation of
+this new navigation mode is pending.

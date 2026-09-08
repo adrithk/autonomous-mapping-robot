@@ -168,3 +168,23 @@ and an occupancy image. Autonomous exploration and automatic map saving are plan
 Offline transport/model checks and initial user-observed simulation are recorded.
 Physical timing, calibrated odometry, SLAM map export and integrated mission
 acceptance remain pending; see [testing](testing.md) and [roadmap](../ROADMAP.md).
+
+## Nav2 simulation interfaces — September 8, 2026
+
+`nav_sim.launch.py` composes simulation + live SLAM + Nav2, using `/clock`.
+`/navigate_to_pose` accepts `nav2_msgs/action/NavigateToPose` in map coordinates.
+NavFn plans using the live `/map`; local obstacles come from `/scan`; navigation
+reads `/diff_drive_controller/odom`. The Nav2 collision radius is 0.215 m plus
+0.005 m padding, conservatively enclosing the offset robot footprint.
+
+Controller and recovery behaviors publish TwistStamped to `/cmd_vel_nav`;
+velocity_smoother outputs TwistStamped to `/cmd_vel_smoothed`; collision_monitor
+outputs TwistStamped to `/diff_drive_controller/cmd_vel`. Commands are capped
+at 0.12 m/s and 0.6 rad/s, with 0.3 m/s² and 1.5 rad/s² acceleration limits.
+The smoother input timeout is 0.2 s; monitor scan timeout is 0.5 s; existing wheel
+command timeout is 0.25 s. These settings are not measured stopping guarantees.
+
+Teleop must be stopped before launching Nav2 because it directly publishes to the
+wheel controller, bypassing this pipeline. Mode switching currently uses separate
+exclusive launch sessions; there is no automatic command multiplexer. Physical
+navigation and autonomous frontier goal selection remain unimplemented/unverified.

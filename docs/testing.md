@@ -100,3 +100,12 @@ python3 test/test_teleop.py
 
 ROS-dependent compilation and plugin loading require Ubuntu/ROS; native tests
 cannot substitute for `colcon build`, `colcon test` and physical acceptance.
+
+## Nav2 checks — September 8, 2026
+
+`test/test_navigation.py` under the ROS package adds command-type/limit, collision
+bounds, live-map and dependency checks. Its ROS-only check generates both launches,
+checks server executables and verifies clock rewrites; it is skipped without ROS.
+The existing colcon test command runs it automatically. See plan 008 for required
+runtime goal, cancellation, blocked-goal and repeatability checks; offline success
+does not establish obstacle avoidance.

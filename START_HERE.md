@@ -8,6 +8,7 @@ this checkout is now the consolidated project entry point.
 ## Work with the project
 
 - Simulation setup: [WSL / Ubuntu guide](ros_ws/src/my_bot/WSL_SETUP.md).
+- Navigation with live SLAM: [Nav2 guide](ros_ws/src/my_bot/NAVIGATION.md), [copy/paste WSL workflow](docs/WSL_COPY_PASTE.md).
 - Mapping and export: [SLAM guide](ros_ws/src/my_bot/SLAM.md).
 - Physical bringup: [hardware guide](ros_ws/src/my_bot/HARDWARE.md).
 - Firmware: select `pio run -e keyboard` or `pio run -e ros_serial` explicitly.

@@ -17,7 +17,8 @@ saved-map navigation, docking, and vacuum control are outside the current scope.
 | Simulation | Gazebo Harmonic and `gz_ros2_control` | Initial WSL driving/scans demonstrated; repeatable startup and dynamics checks remain |
 | Mapping | SLAM Toolbox via `slam_sim.launch.py` | Simulation configuration and manual map export procedure; runtime/map evidence pending |
 | Physical LiDAR driver | Future ROS integration | A1M8 reported delivered; driver integration pending |
-| Exploration and automatic save | Future ROS integration | Planned; no frontier explorer or Nav2 motion stack implemented |
+| Nav2 click-to-go navigation | `my_bot/launch/nav_sim.launch.py` | Implemented for simulation; offline checks passed, Linux/runtime acceptance pending |
+| Exploration and automatic save | Future ROS integration | Planned; no frontier explorer or automatic completion implemented |
 
 ## Control and data flow
 

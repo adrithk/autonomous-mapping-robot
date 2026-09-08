@@ -82,3 +82,10 @@ map->odom, exploration around boxes, loop consistency and successful map export.
 
 References: [SLAM Toolbox Jazzy launch](https://github.com/SteveMacenski/slam_toolbox/blob/jazzy/launch/online_async_launch.py),
 [Jazzy mapping parameters](https://github.com/SteveMacenski/slam_toolbox/blob/jazzy/config/mapper_params_online_async.yaml).
+
+## Nav2 click-to-go navigation
+
+For navigation while SLAM maps, use [NAVIGATION.md](NAVIGATION.md) and the
+[updated copy/paste workflow](../../../docs/WSL_COPY_PASTE.md). Stop manual teleop
+and the old launch first; run only `nav_sim.launch.py`. Runtime validation of
+this new navigation mode is pending.
