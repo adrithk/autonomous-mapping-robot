@@ -54,8 +54,8 @@ position (radians) and velocity (rad/s); controller publishes odometry/TF.
   position/velocity state interfaces on both. No effort command or IMU.
 - `description/hardware.xacro` owns feedback calibration; keep it synchronized
   with firmware `include/ros_wheel_units.h` if counts/revolution changes.
-- Hardware YAML uses real time; simulation YAML uses `/clock`. Geometry and speed
-  limits are otherwise identical and checked by tests. Limits: 0.15 m/s and 0.75 rad/s;
+- Hardware YAML uses real time; simulation YAML uses `/clock`. Geometry matches; speed
+  limits differ: simulation permits faster linear motion. Physical limits: 0.15 m/s and 0.75 rad/s;
   the plugin additionally scales wheel pairs to at most 6 rad/s, preserving curvature.
 - Serial port is explicitly selected, raw, nonblocking and advisory-locked. Close
   other serial programs (programs that ignore advisory locks can still interfere).

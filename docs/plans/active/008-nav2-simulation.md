@@ -132,3 +132,15 @@ RViz updates and goal completion still require target runtime verification.
 Official parameter semantics:
 https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/planners_plugins/configuring_navfn/
 https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/core_servers/costmap_2d/
+
+## Real-robot preparation documentation
+
+Added Option B to WSL_COPY_PASTE.md: Pi SSH/install/build, explicit firmware upload,
+serial identification, real hardware launch, PC RViz networking/real-time settings,
+low-speed teleop, optional upstream A1 LiDAR bringup, and remaining physical
+mapping/Nav2 prerequisites. Corrected stale hardware/simulation speed equivalence
+in HARDWARE.md. No launch/firmware changes or physical acceptance claimed.
+Verified documented hardware launch arguments and RViz config against source,
+A1 arguments against upstream, and WSL networking against Microsoft documentation.
+All 26 Bash blocks in the combined guide passed bash -n; git diff --check passed.
+Commands were not executed against a Pi or physical robot.

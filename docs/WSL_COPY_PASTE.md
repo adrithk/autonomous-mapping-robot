@@ -1,4 +1,8 @@
-# WSL: Nav2 navigation while SLAM maps
+# WSL simulation and real-robot startup
+
+Choose **Option A (simulation)** below or [Option B (real robot)](#option-b-real-robot--raspberry-pi--esp32--rplidar).
+
+## Option A: simulation
 
 For Ubuntu 24.04 in WSL2 with ROS 2 Jazzy already installed. No physical robot or
 LiDAR needed. Use this consolidated repository, not the older ~/ros_ws checkout.
@@ -296,3 +300,268 @@ After relaunch, test an open-space goal and a goal around a box, cancellation,
 and a blocked goal. Enable Local obstacle clearance in RViz and confirm it
 updates as the robot moves. Reduced traffic is workload-dependent; no Pi/WSL
 performance gain has been measured yet. Slowing near obstacles is still expected.
+
+# Option B: real robot — Raspberry Pi + ESP32 + RPLIDAR
+
+Use this option instead of the simulation launch commands above. Assumes Ubuntu
+24.04 **64-bit** and ROS 2 Jazzy are already installed on the Pi. These are
+preparation instructions checked against the code, **not evidence of a successful
+physical test**. First stage: real wheel feedback, slow WASD driving and RViz.
+Second stage: real laser display. Physical SLAM/Nav2 integration still needs the
+checks at the end; the simulation launch must never be used to control hardware.
+
+| Where | What runs |
+| --- | --- |
+| Pi | ESP32 hardware interface, wheel controller, robot TF, real LiDAR driver |
+| PC Ubuntu/WSL | RViz, displaying the Pi's ROS topics over your LAN |
+| PC SSH terminals | Commands execute on the Pi, including WASD |
+| ESP32 | Explicit `ros_serial` firmware build; PID and watchdog |
+
+Stop all simulation/old ROS processes before starting. The ESP32 and LiDAR USB
+**data** cables connect to the Pi, not WSL. The Pi needs its own suitable power
+supply. Keep the existing tested power/wiring arrangement for initial bench work.
+
+## B1. Connect to the Pi with SSH
+
+Once, on the Pi's own terminal (monitor/keyboard):
+
+```bash
+sudo apt update
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+whoami
+hostname -I
+```
+
+Write down the username and LAN IP. On your PC (PowerShell, WSL or Mac Terminal),
+replace BOTH placeholders below with those values:
+
+```bash
+ssh YOUR_PI_USERNAME@YOUR_PI_IP
+```
+
+Accept the host key after checking it is your Pi and enter your Pi password.
+The prompt now belongs to the Pi. Open another SSH session for each Pi terminal
+below. `exit` returns to the PC. SSH carries the terminal; it does **not** connect
+RViz to ROS automatically.
+
+## B2. Pi: install dependencies and build once
+
+Run inside SSH. This repository currently declares simulation dependencies too;
+rosdep may install Gazebo libraries on the Pi, but hardware mode will not run it.
+
+```bash
+bash <<'BASH'
+set -e
+source /opt/ros/jazzy/setup.bash
+sudo apt update
+sudo apt install -y git ros-dev-tools ros-jazzy-rmw-fastrtps-cpp
+cd "$HOME"
+if [ ! -d autonomous-mapping-robot ]; then
+  git clone https://github.com/adrithk/autonomous-mapping-robot.git
+fi
+cd ~/autonomous-mapping-robot
+git pull --ff-only
+if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+  sudo rosdep init
+fi
+rosdep update
+cd ros_ws
+rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
+colcon build --packages-select my_bot --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+source install/setup.bash
+colcon test --packages-select my_bot --event-handlers console_direct+
+colcon test-result --verbose
+sudo usermod -aG dialout "$USER"
+BASH
+```
+
+Stop if installation/build/tests fail. Close all SSH sessions and reconnect so
+serial-group membership takes effect. `groups` should include `dialout`.
+
+For later code updates, on the Pi, stop its launch and use:
+
+```bash
+cd ~/autonomous-mapping-robot && git pull --ff-only && source /opt/ros/jazzy/setup.bash && cd ros_ws && colcon build --packages-select my_bot --symlink-install && source install/setup.bash
+```
+
+## B3. ESP32 firmware and serial identification
+
+Upload the **ros_serial** environment explicitly from the computer already set up
+for PlatformIO, with the ESP32 connected there. In the repository root:
+
+```bash
+pio run -e ros_serial -t upload
+```
+
+Do not flash the keyboard environment for ROS. Close its serial monitor and move
+the ESP32 USB cable to the Pi. On the Pi:
+
+```bash
+ls -l /dev/serial/by-id/
+```
+
+Identify the ESP32 path by checking before/after plugging it in. Repeat for LiDAR
+later; do not confuse their ports. If by-id names are unavailable or identical,
+inspect `ls -l /dev/serial/by-path/` and use the verified physical USB-port path.
+Avoid assuming that ttyUSB0 will always belong to the same device.
+
+## B4. Network setup for RViz on the PC
+
+Pi and PC must be on the same trusted LAN (not an isolated guest network).
+Use domain 42 for this robot, separate from your previous default-domain sim.
+The commands below use the same middleware on both hosts.
+
+For WSL, Windows 11 22H2 or newer supports mirrored networking, including
+multicast. Merge this into `%UserProfile%\.wslconfig` on Windows; preserve existing
+settings and do not create a duplicate `[wsl2]` section:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+Save work in WSL first, then run in **PowerShell**:
+
+```powershell
+wsl --shutdown
+```
+
+Reopen Ubuntu. Windows/Hyper-V firewalls and Wi-Fi isolation can still block ROS
+traffic. If discovery fails, troubleshoot the network instead of changing TF
+settings or disabling all firewalls. Ordinary SSH working is not proof that ROS
+multicast/UDP discovery works. See [Microsoft's WSL networking guide](https://learn.microsoft.com/en-us/windows/wsl/networking).
+
+## B5. Pi terminal 1: start the real drivetrain
+
+Raise the wheels for the initial test. Have a way to remove motor power. In this
+SSH terminal, paste the verified ESP32 path when prompted:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
+export ROS_DOMAIN_ID=42
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+unset ROS_LOCALHOST_ONLY
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+read -r -p 'ESP32 full /dev/serial/... path: ' ESP32_PORT
+ros2 launch my_bot bringup.launch.py mode:=hardware rviz:=false serial_device:="$ESP32_PORT"
+```
+
+Leave running. This starts wheel control and `odom -> base_link`, plus robot link
+transforms. It does not start Gazebo, a LiDAR driver, SLAM or Nav2. Startup errors
+must be resolved before driving; never use a second launch to bypass them.
+
+If you have a graphical Ubuntu desktop and monitor **on the Pi**, `rviz:=true`
+opens RViz there instead. Prefer PC RViz to leave more Pi resources for robotics.
+
+## B6. PC WSL terminal: open RViz for the real robot
+
+Run on the PC, **not inside SSH**. Uses your existing WSL Jazzy/package setup.
+Pull/build first so the local meshes/configuration match the Pi:
+
+```bash
+sudo apt install -y ros-jazzy-rmw-fastrtps-cpp
+cd ~/autonomous-mapping-robot && git pull --ff-only && source /opt/ros/jazzy/setup.bash && cd ros_ws && colcon build --packages-select my_bot --symlink-install && source install/setup.bash
+export ROS_DOMAIN_ID=42
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+unset ROS_LOCALHOST_ONLY
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+ros2 daemon stop
+ros2 node list
+rviz2 -d "$(ros2 pkg prefix --share my_bot)/config/hardware.rviz" --ros-args -p use_sim_time:=false
+```
+
+Expect controller manager and robot-state publisher in the node list, then the
+robot/grid/TF in RViz. Fixed Frame is `odom`. All real-robot nodes use real time,
+not `/clock`. If no nodes appear, check B4; do not launch local controllers.
+
+## B7. Pi terminal 2: check controllers, then slow WASD
+
+Open a second SSH session:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
+export ROS_DOMAIN_ID=42
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+unset ROS_LOCALHOST_ONLY
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+ros2 control list_controllers
+ros2 topic echo /joint_states --once
+```
+
+Both controllers should say `active`. Check wheel feedback while turning each
+wheel by hand first. Only then run:
+
+```bash
+ros2 run my_bot teleop_wasd --ros-args -p use_sim_time:=false -p frame_id:=base_link -p speed:=0.05 -p turn:=0.3 -r cmd_vel:=/diff_drive_controller/cmd_vel
+```
+
+Hold lowercase W/A/S/D. Space or X stops; Ctrl+C quits. Keep this terminal focused.
+Verify directions and stopping with raised wheels before floor driving. Validate
+USB disconnect/watchdog/restart behavior and record results as described in
+[HARDWARE.md](../ros_ws/src/my_bot/HARDWARE.md). Normal keyboard stopping is not an
+emergency stop. The Pi's physical controller limits remain lower than simulation.
+
+## B8. Optional next bench test: real RPLIDAR A1M8
+
+Stop WASD while connecting the LiDAR through its supplied USB adapter. This is a
+separate driver, not the simulated scanner. On the Pi, build upstream's driver in
+a separate workspace so it is not accidentally added to this project's Git:
+
+```bash
+bash <<'BASH'
+set -e
+source /opt/ros/jazzy/setup.bash
+mkdir -p ~/lidar_ws/src
+cd ~/lidar_ws/src
+if [ ! -d sllidar_ros2 ]; then
+  git clone https://github.com/Slamtec/sllidar_ros2.git
+fi
+cd ~/lidar_ws
+rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
+colcon build --packages-select sllidar_ros2 --symlink-install
+BASH
+```
+
+Pi terminal 3, after identifying its distinct serial path:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/lidar_ws/install/setup.bash
+export ROS_DOMAIN_ID=42
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+unset ROS_LOCALHOST_ONLY
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+read -r -p 'LiDAR full /dev/serial/... path: ' LIDAR_PORT
+ros2 launch sllidar_ros2 sllidar_a1_launch.py serial_port:="$LIDAR_PORT" serial_baudrate:=115200 frame_id:=laser
+```
+
+Upstream [A1 launch arguments](https://github.com/Slamtec/sllidar_ros2/blob/main/launch/sllidar_a1_launch.py)
+were checked for this guide; the installed driver still needs physical validation.
+In PC RViz, Add → By topic → `/scan` → LaserScan. Set Reliability to Best Effort.
+The current hardware RViz file has no laser display by default. If troubleshooting
+in another sourced/domain-42 Pi terminal, `ros2 topic hz /scan` measures reception;
+it does not start or publish scans. The real scanner rate is driver/hardware
+controlled, independent of the simulation's 15 Hz setting.
+
+## B9. Before physical mapping and Nav2
+
+The model currently assumes the laser is centered over the axle, 0.10 m above the
+floor. This is a placeholder. Give the final scan-plane height, forward/sideways
+offsets and mounting direction before mapping. Hardware launch does not yet expose
+these offsets as launch arguments; they must be integrated into its model first.
+Do not add another publisher for the same laser transform as a workaround.
+
+Also confirm final wheel separation/radius, encoder calibration, measured straight
+travel/turn accuracy, power stability and watchdog behavior. Synchronize Pi/PC
+system clocks (`timedatectl status` on each; resolve unsynchronized clocks before
+multi-host mapping). Scan dots alone do not establish accurate mapping.
+
+Once those checks pass, the next integration will run SLAM on the Pi with real time
+and the real `/scan`, then open the map RViz view on the PC. Physical Nav2 requires
+hardware-specific velocity settings and runtime acceptance: the current faster
+simulation Nav2 configuration is not a validated real-robot launch. No autonomous
+exploration manager is implemented yet. This guide deliberately provides runnable
+hardware/laser bringup now rather than claiming the remaining integration is done.
