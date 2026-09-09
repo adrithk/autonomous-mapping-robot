@@ -8,6 +8,7 @@ this checkout is now the consolidated project entry point.
 ## Work with the project
 
 - Simulation setup: [WSL / Ubuntu guide](ros_ws/src/my_bot/WSL_SETUP.md).
+- Autonomous simulation: [exploration guide](ros_ws/src/my_bot/EXPLORATION.md), [active plan 009](docs/plans/active/009-autonomous-exploration.md). Runtime acceptance remains pending.
 - Navigation with live SLAM: [Nav2 guide](ros_ws/src/my_bot/NAVIGATION.md), [copy/paste WSL workflow](docs/WSL_COPY_PASTE.md).
 - Mapping and export: [SLAM guide](ros_ws/src/my_bot/SLAM.md).
 - Physical bringup: [hardware guide](ros_ws/src/my_bot/HARDWARE.md).

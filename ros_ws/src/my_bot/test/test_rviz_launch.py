@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class RvizLaunchChecks(unittest.TestCase):
     def test_child_override_is_scoped(self):
-        for name in ('nav_sim.launch.py', 'slam_sim.launch.py'):
+        for name in ('nav_sim.launch.py', 'slam_sim.launch.py', 'explore_sim.launch.py'):
             tree = ast.parse((ROOT/'launch'/name).read_text())
             parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
             overrides = 0

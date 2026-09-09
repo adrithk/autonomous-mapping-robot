@@ -1,0 +1,20 @@
+# Simulation-first mission policy. Geometry must enclose the Nav2 footprint.
+exploration_manager:
+  ros__parameters:
+    use_sim_time: true
+    autostart: true
+    map_frame: map
+    base_frame: base_link
+    robot_radius: 0.22
+    minimum_frontier_size: 0.15
+    viewpoint_distance: 0.8
+    sensor_timeout: 5.0
+    map_timeout: 10.0
+    startup_timeout: 120.0
+    action_timeout: 15.0
+    goal_timeout: 180.0
+    cooldown: 30.0
+    settle_time: 2.0
+    stationary_time: 1.0
+    stop_timeout: 15.0
+    save_timeout: 20.0

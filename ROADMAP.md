@@ -14,7 +14,7 @@ The mission is autonomous fresh-zone indoor mapping without an IMU.
 | SLAM and manual map export | Implemented; [initial simulated SLAM screenshot](results/2026-09-08-simulated-lidar-slam.md) records visualization and user-confirmed driving with live map updates | Repeatable runtime, loop consistency and saved YAML/image |
 | Real LiDAR and TF | Provisional model and hardware identified | Driver, final mount, scans and clock/frame checks |
 | Nav2 click-to-go navigation | Simulation launch/configuration implemented; offline checks passed | Linux build/launch, goals around obstacles, cancellation and failure tests |
-| Autonomous exploration | Planned | Frontier selection, validated Nav2 execution, completion and automatic map saving |
+| Autonomous exploration | Frontier manager, simulation launch and automatic saving implemented; offline tests | Jazzy/Gazebo repeated missions, collision-free execution, map reload and physical acceptance |
 | Project showcase | README, documentation and upload slots prepared | Finished robot photo, video, maps from one or two rooms and measured results |
 
 ## Finish in this order

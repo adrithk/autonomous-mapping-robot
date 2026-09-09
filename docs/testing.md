@@ -109,3 +109,21 @@ checks server executables and verifies clock rewrites; it is skipped without ROS
 The existing colcon test command runs it automatically. See plan 008 for required
 runtime goal, cancellation, blocked-goal and repeatability checks; offline success
 does not establish obstacle avoidance.
+
+## Exploration verification
+
+`test_exploration.py` exercises map geometry/clearance, noise rejection, deterministic
+viewpoints, map-origin changes, local-change retry invalidation, completion windows,
+action cancellation leases, error classification and a synthetic occluded-view
+fixture. It needs NumPy/SciPy but no ROS. The synthetic fixture is not a simulated
+robot acceptance run. `test_exploration_adapter.py` requires sourced Jazzy and uses
+fake action handles/results to test rejection, cancellation during acceptance,
+stale callbacks, sensor loss and map-save errors; it never launches hardware.
+
+Run the normal package-scoped colcon build/test/test-result commands. Then follow
+Option C in WSL_COPY_PASTE.md for the original and exploration_occluded worlds.
+Record at least two fresh launches of each: map/candidate changes, selected goals,
+stop/cancel, no collisions, final outcome and saved-map reload. Include an
+unreachable-frontier case (PARTIAL), sensor/TF interruption (FAULTED, never
+COMPLETE), and a save-directory failure (SAVE_FAILED with retry after correction).
+No offline result establishes target runtime or physical acceptance.

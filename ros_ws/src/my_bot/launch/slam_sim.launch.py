@@ -13,11 +13,12 @@ def generate_launch_description():
     package = Path(get_package_share_directory('my_bot'))
     slam = Path(get_package_share_directory('slam_toolbox'))
     return LaunchDescription([
+        DeclareLaunchArgument('world', default_value=str(package/'worlds/test_room.sdf')),
         DeclareLaunchArgument('rviz', default_value='true', choices=['true', 'false']),
         # Keep the child RViz override from disabling this parent's RViz.
         GroupAction(scoped=True, actions=[IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(package/'launch/sim.launch.py')),
-            launch_arguments={'rviz': 'false'}.items())]),
+            launch_arguments={'rviz': 'false', 'world': LaunchConfiguration('world')}.items())]),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(slam/'launch/online_async_launch.py')),
             launch_arguments={'use_sim_time': 'true', 'autostart': 'true',
