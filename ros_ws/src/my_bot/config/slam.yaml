@@ -18,7 +18,9 @@ slam_toolbox:
     minimum_travel_heading: 0.1
     map_update_interval: 1.0
     transform_publish_period: 0.02
-    transform_timeout: 0.2
+    # Scan-stamped map->odom TF is future-dated by this bounded margin.
+    # Allow brief scan/SLAM scheduling delays; never restamp stale TF as current.
+    transform_timeout: 0.5
     tf_buffer_duration: 30.0
     scan_queue_size: 1
     use_scan_matching: true

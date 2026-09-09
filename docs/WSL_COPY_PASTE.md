@@ -175,11 +175,18 @@ source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
   timeout 10s ros2 control list_controllers
   for node in slam_toolbox controller_server planner_server behavior_server bt_navigator velocity_smoother collision_monitor; do
     timeout 5s ros2 lifecycle get /$node
+    timeout 5s ros2 param get /$node use_sim_time
   done
   timeout 10s ros2 topic echo /clock --once
   timeout 10s ros2 topic echo /scan --once --field header
   timeout 10s ros2 topic echo /map --once --field info
-  timeout 5s ros2 run tf2_ros tf2_echo map laser
+  timeout 5s ros2 topic info /clock --verbose
+  timeout 5s ros2 topic echo /diff_drive_controller/odom --once --field header
+  timeout 5s ros2 run tf2_ros tf2_echo map odom --ros-args -p use_sim_time:=true
+  timeout 5s ros2 run tf2_ros tf2_echo odom base_link --ros-args -p use_sim_time:=true
+  timeout 5s ros2 run tf2_ros tf2_echo map laser --ros-args -p use_sim_time:=true
+  timeout 5s ros2 param get /controller_server FollowPath.transform_tolerance
+  timeout 5s ros2 param get /slam_toolbox transform_timeout
   timeout 10s ros2 topic info /cmd_vel_nav --verbose
   timeout 10s ros2 topic info /cmd_vel_smoothed --verbose
   timeout 10s ros2 topic info /diff_drive_controller/cmd_vel --verbose
@@ -243,3 +250,30 @@ The navigation manager activates these servers; RViz sends a NavigateToPose goal
 File-by-file details and test criteria: [NAVIGATION.md](../ros_ws/src/my_bot/NAVIGATION.md).
 Frontier exploration, automatic mission completion/save and physical Nav2 testing
 are future steps, not enabled by this launch.
+
+## Transform-related goal aborts
+
+“Unable to transform robot pose into global plan's frame” means the controller
+cannot relate its odometry pose to the map path at the required time. It does not
+establish an obstacle or planning failure. Nav2 aborts TF errors immediately;
+`failure_tolerance` applies to a different error (no valid control), so removing
+that timeout does not fix this error.
+
+The configuration now gives SLAM's map TF and the map-consuming navigation
+components a bounded 0.5-second margin instead of 0.2 seconds (the navigator's
+previous implicit default was not set here). This mitigates brief timing delays;
+it cannot fix missing TF, duplicate simulations, mixed clocks, or sustained lag.
+Local odometry/collision-monitor tolerances and motor watchdogs remain unchanged.
+This change needs a PC runtime retest; the reported root cause is not confirmed.
+
+Stop the previous launch with Ctrl+C before pulling and rebuilding. Use this
+instead of the normal launch line to retain the complete error and preceding
+transform timestamps:
+
+```bash
+ros2 launch my_bot nav_sim.launch.py 2>&1 | tee ~/nav2-launch.log
+```
+
+Keep the same sourced terminal setup from above. If the goal aborts again, collect
+section 7 diagnostics while it is still running and send `nav2-launch.log` too.
+Do not run WASD while Nav2 controls the robot.

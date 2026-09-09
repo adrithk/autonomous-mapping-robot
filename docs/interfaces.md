@@ -188,3 +188,12 @@ Teleop must be stopped before launching Nav2 because it directly publishes to th
 wheel controller, bypassing this pipeline. Mode switching currently uses separate
 exclusive launch sessions; there is no automatic command multiplexer. Physical
 navigation and autonomous frontier goal selection remain unimplemented/unverified.
+
+### Navigation TF timing (September 8, preliminary simulation tuning)
+
+SLAM map->odom publication remains scan-stamped with a 0.5 s transform_timeout
+margin. DWB, global costmap, behavior server and BT navigator use a bounded 0.5 s
+transform_tolerance. Local costmap and collision monitor retain 0.2 s. These
+parameters have different framework semantics (publication offset vs lookup wait
+or acceptable transform age); they are not motor or overall goal timeouts.
+The change is a mitigation for reported TF aborts pending PC runtime verification.

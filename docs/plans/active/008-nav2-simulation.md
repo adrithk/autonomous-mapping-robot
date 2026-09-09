@@ -43,3 +43,30 @@ Source semantics checked in ros2/launch Jazzy actions/include_launch_description
 and actions/group_action.py: include arguments become SetLaunchConfiguration;
 scoped groups push/pop configurations. This is a launch defect, separate from the
 previous shader warning investigation.
+
+## Map-transform abort mitigation — September 8
+
+Reviewed launch clock propagation, TF frame ownership, DWB configuration, SLAM
+TF publication and command-chain settings. No frame-name mismatch found in the
+checked configuration. Upstream Jazzy DWB rejects an extrapolated lookup when the
+latest transform exceeds transform_tolerance; ControllerTFError aborts immediately
+rather than using failure_tolerance. SLAM publishes scan-stamped map->odom TF plus
+transform_timeout. Thus increasing goal patience would not address this error.
+
+Raised SLAM's TF margin and DWB/global-costmap/behavior/navigator transform
+allowances to 0.5 seconds. This is a bounded timing mitigation, not a confirmed
+root-cause fix: the PC's failing transform timestamps are unavailable. Kept local
+odometry and collision-monitor allowances, sensor expiry, velocity limits,
+footprint and watchdogs unchanged. Did not restamp old observations as current.
+Updated WSL diagnostic commands to capture individual TF links, odometry stamps,
+clock publishers, node clocks and effective timing parameters; added launch-log
+capture for the preceding upstream error details.
+
+Verification: 15 offline tests passed, 2 ROS-dependent tests skipped; diff check
+passed. ROS/Gazebo/colcon is unavailable on this Mac. Goal completion and physical
+Pi acceptance remain unverified; repeat the runtime acceptance tests on the PC.
+
+References checked:
+- https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_dwb_controller/nav_2d_utils/src/tf_help.cpp
+- https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_controller/src/controller_server.cpp
+- https://github.com/SteveMacenski/slam_toolbox/blob/jazzy/src/slam_toolbox_common.cpp
