@@ -128,3 +128,19 @@ References checked:
 - https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_dwb_controller/nav_2d_utils/src/tf_help.cpp
 - https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_controller/src/controller_server.cpp
 - https://github.com/SteveMacenski/slam_toolbox/blob/jazzy/src/slam_toolbox_common.cpp
+
+## Follow-up: larger simulation TF allowance
+
+User reports continued difficulty at 0.5 s and requested substantially more
+buffer. Increased SLAM transform_timeout and DWB/global-costmap/behavior/navigator
+transform_tolerance to 1.5 s. This permits older map corrections and is provisional
+simulation tuning, not verified physical-robot tuning. It does not repair missing
+TF or mixed clocks. The scan rate remains 10 Hz: increasing it adds processing
+load and does not establish that observations will arrive sooner on an overloaded
+WSL host. Local-costmap and collision-monitor transform tolerances remain 0.2 s;
+sensor expiry and motor watchdogs remain unchanged.
+
+Offline verification: 15 tests passed, 2 ROS-only tests skipped. Runtime goal
+completion still needs PC verification; prior 0.5 s mitigation was insufficient
+according to the user. If the same abort persists, inspect the preceding TF error
+and timestamps from nav2-launch.log before increasing allowances again.

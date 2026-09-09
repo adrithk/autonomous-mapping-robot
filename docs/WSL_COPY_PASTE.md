@@ -260,7 +260,7 @@ establish an obstacle or planning failure. Nav2 aborts TF errors immediately;
 that timeout does not fix this error.
 
 The configuration now gives SLAM's map TF and the map-consuming navigation
-components a bounded 0.5-second margin instead of 0.2 seconds (the navigator's
+components a bounded 1.5-second margin (increased from 0.5 after continued failures) (the navigator's
 previous implicit default was not set here). This mitigates brief timing delays;
 it cannot fix missing TF, duplicate simulations, mixed clocks, or sustained lag.
 Local odometry/collision-monitor tolerances and motor watchdogs remain unchanged.
