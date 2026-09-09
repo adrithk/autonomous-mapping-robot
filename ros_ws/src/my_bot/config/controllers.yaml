@@ -25,8 +25,8 @@ diff_drive_controller:
     cmd_vel_timeout: 0.25
     pose_covariance_diagonal: [0.01, 0.01, 1000.0, 1000.0, 1000.0, 0.05]
     twist_covariance_diagonal: [0.01, 0.01, 1000.0, 1000.0, 1000.0, 0.05]
-    linear.x.max_velocity: 0.15
-    linear.x.min_velocity: -0.15
+    linear.x.max_velocity: 0.20
+    linear.x.min_velocity: -0.20
     linear.x.max_acceleration: 0.3
     linear.x.max_deceleration: -0.3
     angular.z.max_velocity: 0.75

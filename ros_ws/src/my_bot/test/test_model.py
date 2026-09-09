@@ -144,6 +144,12 @@ class ModelChecks(unittest.TestCase):
         for name in ('controller_manager', 'diff_drive_controller', 'joint_state_broadcaster'):
             self.assertTrue(sim[name]['ros__parameters'].pop('use_sim_time'))
             self.assertFalse(real[name]['ros__parameters'].pop('use_sim_time'))
+        # Simulation may run faster; retain matching geometry and other settings.
+        sim_drive = sim['diff_drive_controller']['ros__parameters']
+        real_drive = real['diff_drive_controller']['ros__parameters']
+        for key in ('linear.x.max_velocity', 'linear.x.min_velocity'):
+            self.assertGreaterEqual(abs(sim_drive[key]), abs(real_drive[key]))
+            sim_drive[key] = real_drive[key]
         self.assertEqual(sim, real)
         drive = real['diff_drive_controller']['ros__parameters']
         peak = (drive['linear.x.max_velocity'] +

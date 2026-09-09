@@ -86,3 +86,15 @@ Offline verification: 15 tests passed, 2 ROS-only tests skipped. Runtime goal
 completion still needs PC verification; prior 0.5 s mitigation was insufficient
 according to the user. If the same abort persists, inspect the preceding TF error
 and timestamps from nav2-launch.log before increasing allowances again.
+
+## Faster simulation — September 8
+
+Nav2 linear speed increased from 0.12 to 0.18 m/s, with the simulation drivetrain
+cap raised to 0.20 m/s. Turning and acceleration limits are unchanged. Simulated
+LiDAR increased from 10 to 15 Hz; SLAM minimum_time_interval reduced from 0.1 to
+0.05 s so it can accept the faster scan stream. Travel thresholds still apply.
+Physical driver/controller limits and default WASD speeds are unchanged. Faster
+scans add processing load; runtime timing and navigation acceptance remain pending.
+Tests now permit intentional simulation/hardware speed differences while still
+checking matching geometry/settings, physical wheel limits and simulated wheel
+limits. Offline suite: 15 passed, 2 ROS-dependent skipped.

@@ -33,7 +33,7 @@ outside this change; use only nav_sim.launch.py for this acceptance run.
 
 ## Conservative first settings
 
-Nav2 is limited to 0.12 m/s and 0.6 rad/s, within the existing drivetrain limits.
+Nav2 is limited to 0.18 m/s and 0.6 rad/s, within the existing drivetrain limits.
 NavFn and DWB use a 0.215 m collision radius plus 0.005 m padding: this encloses the
 robot's offset 0.18 m front extent and 0.1075 m half-width (corner radius ~0.210 m).
 It may reject narrow passages that a more precisely modeled robot could traverse.
@@ -144,3 +144,15 @@ Offline verification: 15 tests passed, 2 ROS-only tests skipped. Runtime goal
 completion still needs PC verification; prior 0.5 s mitigation was insufficient
 according to the user. If the same abort persists, inspect the preceding TF error
 and timestamps from nav2-launch.log before increasing allowances again.
+
+## Faster simulation — September 8
+
+Nav2 linear speed increased from 0.12 to 0.18 m/s, with the simulation drivetrain
+cap raised to 0.20 m/s. Turning and acceleration limits are unchanged. Simulated
+LiDAR increased from 10 to 15 Hz; SLAM minimum_time_interval reduced from 0.1 to
+0.05 s so it can accept the faster scan stream. Travel thresholds still apply.
+Physical driver/controller limits and default WASD speeds are unchanged. Faster
+scans add processing load; runtime timing and navigation acceptance remain pending.
+Tests now permit intentional simulation/hardware speed differences while still
+checking matching geometry/settings, physical wheel limits and simulated wheel
+limits. Offline suite: 15 passed, 2 ROS-dependent skipped.

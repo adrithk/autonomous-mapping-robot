@@ -38,7 +38,10 @@ class NavigationChecks(unittest.TestCase):
         self.assertLessEqual(smooth['max_accel'][2], drive['angular.z.max_acceleration'])
         self.assertLess(smooth['velocity_timeout'], drive['cmd_vel_timeout'])
         wheel_peak = (smooth['max_velocity'][0] + smooth['max_velocity'][2]*drive['wheel_separation']/2)/drive['wheel_radius']
-        self.assertLess(wheel_peak, 6.0)
+        simulation = ET.parse(ROOT/'description/simulation_parameters.xacro')
+        limit = next(float(p.attrib['value']) for p in simulation.getroot()
+                     if p.attrib.get('name') == 'wheel_velocity_limit')
+        self.assertLess(wheel_peak, limit)
         monitor = params('collision_monitor')
         self.assertEqual(monitor['cmd_vel_in_topic'], '/cmd_vel_smoothed')
         self.assertEqual(monitor['cmd_vel_out_topic'], '/diff_drive_controller/cmd_vel')

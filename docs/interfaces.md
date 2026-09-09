@@ -161,7 +161,7 @@ independent. See [hardware operation](../ros_ws/src/my_bot/HARDWARE.md).
 Configured tree: `map -> odom -> base_link -> laser`. SLAM Toolbox owns
 `map -> odom` in the separate SLAM launch; diff_drive_controller owns `odom -> base_link`;
 robot_state_publisher owns robot link transforms. The simulated scanner publishes
-`/scan` in `laser` at 10 Hz; the physical LiDAR driver remains to be integrated.
+`/scan` in `laser` at 15 Hz; the physical LiDAR driver remains to be integrated.
 SLAM uses simulation time and 0.05 m/cell resolution. Manual map export saves YAML
 and an occupancy image. Autonomous exploration and automatic map saving are planned.
 
@@ -180,7 +180,7 @@ reads `/diff_drive_controller/odom`. The Nav2 collision radius is 0.215 m plus
 Controller and recovery behaviors publish TwistStamped to `/cmd_vel_nav`;
 velocity_smoother outputs TwistStamped to `/cmd_vel_smoothed`; collision_monitor
 outputs TwistStamped to `/diff_drive_controller/cmd_vel`. Commands are capped
-at 0.12 m/s and 0.6 rad/s, with 0.3 m/s² and 1.5 rad/s² acceleration limits.
+at 0.18 m/s and 0.6 rad/s, with 0.3 m/s² and 1.5 rad/s² acceleration limits.
 The smoother input timeout is 0.2 s; monitor scan timeout is 0.5 s; existing wheel
 command timeout is 0.25 s. These settings are not measured stopping guarantees.
 

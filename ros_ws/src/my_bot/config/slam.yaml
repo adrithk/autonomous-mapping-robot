@@ -13,7 +13,7 @@ slam_toolbox:
     min_laser_range: 0.15
     max_laser_range: 6.0
     throttle_scans: 1
-    minimum_time_interval: 0.1
+    minimum_time_interval: 0.05
     minimum_travel_distance: 0.05
     minimum_travel_heading: 0.1
     map_update_interval: 1.0
