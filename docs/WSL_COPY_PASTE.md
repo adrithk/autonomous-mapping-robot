@@ -55,6 +55,40 @@ Expect zero test failures and a package path under
 ~/autonomous-mapping-robot/ros_ws/install. A successful build is not a navigation test.
 The new ROS launch check should run on Jazzy rather than be skipped.
 
+## Quick start: already installed and built
+
+Stop previous launches and RViz first. Use this instead of the installation block
+for normal repeat sessions. It pulls Git, rebuilds only when the revision changes,
+and starts the navigation simulation. No apt update/install or rosdep update runs.
+The parentheses keep error handling and setup isolated to this launch session.
+
+```bash
+(
+  set -e
+  cd ~/autonomous-mapping-robot
+  previous_revision=$(git rev-parse HEAD)
+  git pull --ff-only
+  source /opt/ros/jazzy/setup.bash
+  cd ros_ws
+  if [ "$previous_revision" != "$(git rev-parse HEAD)" ]; then
+    colcon build --packages-select my_bot --symlink-install
+  fi
+  source install/setup.bash
+  ros2 launch my_bot nav_sim.launch.py
+)
+```
+
+With no Git changes, this skips the build. New revisions trigger a build because
+new files, compiled code or install rules can require it. If an update adds new
+dependencies, use section 2 once. If you already pulled separately, edited files
+locally, or a previous build failed, rebuild explicitly before using this shortcut:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+cd ~/autonomous-mapping-robot/ros_ws
+colcon build --packages-select my_bot --symlink-install
+```
+
 ## 3. Terminal 1: launch everything
 
 ```bash
