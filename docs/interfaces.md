@@ -180,7 +180,7 @@ reads `/diff_drive_controller/odom`. The Nav2 collision radius is 0.215 m plus
 Controller and recovery behaviors publish TwistStamped to `/cmd_vel_nav`;
 velocity_smoother outputs TwistStamped to `/cmd_vel_smoothed`; collision_monitor
 outputs TwistStamped to `/diff_drive_controller/cmd_vel`. Commands are capped
-at 0.18 m/s and 0.6 rad/s, with 0.3 m/s² and 1.5 rad/s² acceleration limits.
+at 0.20 m/s and 0.6 rad/s, with 0.3 m/s² and 1.5 rad/s² acceleration limits.
 The smoother input timeout is 0.2 s; monitor scan timeout is 0.5 s; existing wheel
 command timeout is 0.25 s. These settings are not measured stopping guarantees.
 
@@ -197,3 +197,8 @@ transform_tolerance. Local costmap and collision monitor retain 0.2 s. These
 parameters have different framework semantics (publication offset vs lookup wait
 or acceptable transform age); they are not motor or overall goal timeouts.
 The change is a mitigation for reported TF aborts pending PC runtime verification.
+
+Navigation planner fallback tolerance is 0.15 m; final approach tolerance remains
+0.08 m relative to the planned endpoint. Costmap publication may use incremental
+`costmap_updates` messages; consumers must subscribe to updates as RViz does.
+Internal costmap update rates and obstacle resolution are unchanged.

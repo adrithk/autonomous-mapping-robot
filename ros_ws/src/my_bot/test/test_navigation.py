@@ -72,6 +72,20 @@ class NavigationChecks(unittest.TestCase):
         self.assertNotIn('amcl', CONFIG)
         self.assertNotIn('map_server', CONFIG)
 
+    def test_incremental_costmap_display_contract(self):
+        display = yaml.safe_load((ROOT/'config/navigation.rviz').read_text())
+        for entry in display['Visualization Manager']['Displays']:
+            topic = entry.get('Topic', {}).get('Value', '')
+            if entry['Class'] == 'rviz_default_plugins/Map' and topic.endswith('/costmap'):
+                self.assertEqual(entry['Update Topic']['Value'], topic + '_updates')
+        # Preserve obstacle resolution and processing rates despite transport savings.
+        for name, rate in [('local_costmap', 10.0), ('global_costmap', 2.0)]:
+            p = CONFIG[name][name]['ros__parameters']
+            self.assertEqual(p['resolution'], .05)
+            self.assertEqual(p['update_frequency'], rate)
+            self.assertTrue(p['obstacle_layer']['scan']['marking'])
+            self.assertTrue(p['obstacle_layer']['scan']['clearing'])
+
     def test_launch_and_dependencies(self):
         tree = ast.parse((ROOT/'launch/navigation.launch.py').read_text())
         servers = next(ast.literal_eval(n.value) for n in tree.body

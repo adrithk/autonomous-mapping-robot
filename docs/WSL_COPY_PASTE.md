@@ -277,3 +277,22 @@ ros2 launch my_bot nav_sim.launch.py 2>&1 | tee ~/nav2-launch.log
 Keep the same sourced terminal setup from above. If the goal aborts again, collect
 section 7 diagnostics while it is still running and send `nav2-launch.log` too.
 Do not run WASD while Nav2 controls the robot.
+
+## Small performance update
+
+Planner fallback tolerance is now 15 cm; simulation navigation tops out at
+0.20 m/s. Costmaps publish changed regions, and unconfigured native builds default
+to RelWithDebInfo (optimization plus debugging symbols). No new packages needed.
+Use the normal pull/build workflow. Existing explicit build-type choices are
+preserved; to explicitly enable the optimized build, replace the build line with:
+
+```bash
+colcon build --packages-select my_bot --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+colcon test --packages-select my_bot
+colcon test-result --verbose
+```
+
+After relaunch, test an open-space goal and a goal around a box, cancellation,
+and a blocked goal. Enable Local obstacle clearance in RViz and confirm it
+updates as the robot moves. Reduced traffic is workload-dependent; no Pi/WSL
+performance gain has been measured yet. Slowing near obstacles is still expected.

@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
 project(my_bot)
+# Optimize the Pi-side plugin/transport while retaining debugging symbols.
+# Respect explicitly selected builds and multi-configuration generators.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+endif()
 find_package(ament_cmake REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)

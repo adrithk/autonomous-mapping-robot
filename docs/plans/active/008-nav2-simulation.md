@@ -98,3 +98,37 @@ scans add processing load; runtime timing and navigation acceptance remain pendi
 Tests now permit intentional simulation/hardware speed differences while still
 checking matching geometry/settings, physical wheel limits and simulated wheel
 limits. Offline suite: 15 passed, 2 ROS-dependent skipped.
+
+## Small performance pass — September 8
+
+Accepted scope: improve performance without reducing collision checking or
+rewriting the navigation stack. Reviewed navigation/SLAM parameters, visualization
+subscriptions, build configuration and host serial/plugin implementation.
+
+- Navfn fallback goal tolerance: 0.08 -> 0.15 m. The goal checker still uses
+  0.08 m relative to the selected path endpoint, preserving final approach control.
+- Simulation Nav2/smoother speed: 0.18 -> 0.20 m/s, matching the existing simulation
+  drivetrain cap. Turning, acceleration, scan rate, collision footprint, obstacle
+  resolution/update rates, recovery behavior and stop timeouts are unchanged.
+- Costmaps use standard incremental publication rather than forcing full maps.
+  RViz already subscribes to the local costmap update topic. Full internal maps
+  remain available for planning/collision checking; bandwidth savings depend on
+  changed area and subscribers (rolling maps may still require full updates).
+- Default native build is RelWithDebInfo when no build type is selected: optimized
+  plugin/serial code with debugging symbols. Explicit Debug or other choices are
+  preserved. Tests already use -UNDEBUG so assertions remain enabled.
+
+No speculative serial refactor or planner algorithm replacement: neither has a
+measured bottleneck here. Slow motion may still be necessary near obstacles and
+goals, or result from simulation running slower than real time. No measured CPU
+or navigation speedup is claimed. Pi physical speed settings remain unchanged;
+this shared navigation configuration is still pending physical integration.
+
+Verification: 16 offline Python checks passed, 2 ROS-only skipped. Native transport
+suite passed with -O2 -g -UNDEBUG, covering CRC, sequence/wraparound, handshake,
+reconnect and stale/reboot responses. Diff check passed. Linux colcon, incremental
+RViz updates and goal completion still require target runtime verification.
+
+Official parameter semantics:
+https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/planners_plugins/configuring_navfn/
+https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/core_servers/costmap_2d/
