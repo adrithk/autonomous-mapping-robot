@@ -26,6 +26,7 @@ install(PROGRAMS scripts/teleop_wasd.py DESTINATION lib/${PROJECT_NAME} RENAME t
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(model_checks test/test_model.py)
+  ament_add_pytest_test(rviz_launch_checks test/test_rviz_launch.py)
   ament_add_pytest_test(navigation_checks test/test_navigation.py)
   ament_add_pytest_test(teleop_checks test/test_teleop.py)
   add_executable(hardware_plugin_test test/hardware_plugin_test.cpp)

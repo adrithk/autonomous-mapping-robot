@@ -24,3 +24,22 @@ launch/install/clock test skipped on macOS. Bash documentation syntax and diff
 whitespace checks passed. No firmware change. ROS/colcon/Gazebo is unavailable on
 this Mac, so target build, new hardware-plugin test and runtime acceptance remain
 pending on the PC. Do not mark this plan complete until the runtime criteria pass.
+
+## RViz launch bug correction — September 8
+
+User reported Terminal 1 never opened RViz; manual old SLAM view opened without
+Nav2 controls. Found rviz=false launch-argument leakage from unscoped child includes
+in both nav_sim and slam_sim. Isolated overrides with scoped GroupAction, retained
+parent rviz option and enabled process output. Added rviz_navigation.launch.py for
+opening the correct navigation UI independently and updated the WSL workflow.
+
+Fifteen offline tests passed; two ROS-only tests skipped. The new static regression
+was also run against the prior committed nav_sim launch and correctly failed.
+The ROS-only regression evaluates both parents with rviz=true/false using actual
+launch scoping, replacing external backends and never starting processes. Target
+ROS tests and actual WSL window visibility remain pending. No firmware changes.
+
+Source semantics checked in ros2/launch Jazzy actions/include_launch_description.py
+and actions/group_action.py: include arguments become SetLaunchConfiguration;
+scoped groups push/pop configurations. This is a launch defect, separate from the
+previous shader warning investigation.

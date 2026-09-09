@@ -79,3 +79,25 @@ Sources checked against Jazzy:
 - https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_bringup/launch/navigation_launch.py
 - https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_bringup/params/nav2_params.yaml
 - https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/core_servers/configuring_velocity_smoother/
+
+## RViz startup correction — September 8
+
+The included SLAM/simulation launch was passed rviz=false without a scoped group.
+ROS launch arguments modify LaunchContext, so that value also disabled the parent
+RViz action. Both nav_sim and slam_sim now isolate the child override with
+GroupAction(scoped=True). Default launch requests one RViz window; rviz=false
+still requests none. RViz output is visible in the launch terminal.
+
+For an already running stack with no RViz window, open only the correct UI:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
+ros2 launch my_bot rviz_navigation.launch.py
+```
+
+This loads navigation.rviz with Nav2 Goal and Navigation 2, not the older slam.rviz
+view. Do not launch a second simulation just to open RViz. Offline regression
+checks reject the previous unscoped launch. A ROS-only regression checks parent
+true/false decisions using LaunchContext without starting processes; it remains
+unrun on this Mac. WSL window/rendering behavior still needs user confirmation.

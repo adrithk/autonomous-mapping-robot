@@ -65,7 +65,10 @@ ros2 launch my_bot nav_sim.launch.py
 
 Leave it running. This starts Gazebo, the robot/controllers, simulated LiDAR, SLAM,
 Nav2 and one RViz window. Do not also start bringup.launch.py or slam_sim.launch.py.
-Wait for the map and navigation activation. “Registering sensor” is normal and does
+RViz should open automatically with **Nav2 Goal** in the toolbar and the
+**Navigation 2** panel. A child-launch argument leak that previously prevented
+this has been fixed; pull and rebuild before retrying. RViz process logs now
+appear in Terminal 1. Wait for the map and navigation activation. “Registering sensor” is normal and does
 not indicate a stalled progress bar. No separate /scan echo is needed to publish data.
 
 ## 4. Click a destination
@@ -159,11 +162,17 @@ If only RViz fails, stop Terminal 1 and restart with:
 ros2 launch my_bot nav_sim.launch.py rviz:=false
 ```
 
-To reopen just RViz from a sourced second terminal:
+To reopen just RViz in a second terminal (only when no RViz window is running):
 
 ```bash
-rviz2 -d ~/autonomous-mapping-robot/ros_ws/install/my_bot/share/my_bot/config/navigation.rviz --ros-args -p use_sim_time:=true
+source /opt/ros/jazzy/setup.bash
+source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
+ros2 launch my_bot rviz_navigation.launch.py
 ```
+
+This standalone launch loads **navigation.rviz**, including the **Nav2 Goal** toolbar
+tool and **Navigation 2** panel with cancellation controls. Do not use the old
+`slam.rviz` command: that view has no Nav2 controls.
 
 This separates the GUI from the running stack; it is not a graphics fix. Gazebo's
 simulated LiDAR still requires a working rendering context.
