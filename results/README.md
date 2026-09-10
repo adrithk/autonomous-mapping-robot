@@ -35,3 +35,7 @@ Use units for every measurement, preserve raw observations, and state pass/fail 
 ## Simulated SLAM
 
 - [Initial simulated LiDAR SLAM visualization — September 8, 2026](2026-09-08-simulated-lidar-slam.md)
+
+## Physical mapping and navigation
+
+- [Real-room teleoperated SLAM and saved-map Nav2 demonstration — September 10, 2026](2026-09-10-real-room-mapping-navigation.md)

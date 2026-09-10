@@ -20,8 +20,9 @@ this checkout is now the consolidated project entry point.
 ## Current execution
 
 Firmware, the ROS hardware plugin, simulation, and simulation SLAM source exist.
-Initial simulation driving/scans are user-observed; SLAM export, physical ROS
-integration and autonomous mission acceptance remain pending.
+Initial simulation driving/scans and [physical teleoperated mapping and saved-map
+Nav2 navigation](results/2026-09-10-real-room-mapping-navigation.md) are documented.
+Repeated physical integration checks and autonomous exploration acceptance remain pending.
 Plans [003](docs/plans/active/003-ros-ready-esp32-transport.md),
 [004](docs/plans/active/004-pi-hardware-interface.md), and
 [005](docs/plans/active/005-simulation-slam.md) retain the remaining validation gates.

@@ -1,8 +1,9 @@
 # System architecture
 
-Updated September 7, 2026. The repository contains two ESP32 entry points and one
+Updated September 10, 2026. The repository contains two ESP32 entry points and one
 ROS 2 Jazzy package, `my_bot`. The target mission is fresh-zone autonomous mapping;
-saved-map navigation, docking, and vacuum control are outside the current scope.
+saved-map navigation is an intermediate physical demonstration. Docking and vacuum
+control remain outside the current scope.
 
 ## Ownership and implementation
 
@@ -10,14 +11,14 @@ saved-map navigation, docking, and vacuum control are outside the current scope.
 |---|---|---|
 | Encoder sampling, PWM, feed-forward/PI | ESP32 `src/robot_drive.cpp` | Shared 50 Hz controller; earlier raised-wheel tracking recorded |
 | Keyboard command entry point | ESP32 `src/main.cpp` | Timed movement, encoder reporting, stop commands |
-| Serial command entry point | ESP32 `src/main_ros.cpp` | v2 CRC/sequence framing, 20 Hz telemetry, 250 ms watchdog; physical validation pending |
-| Serial hardware plugin | `ros_ws/src/my_bot/src/esp32_system.cpp` and `serial_transport.cpp` | Implemented; offline transport tests; ROS plugin loading and physical validation pending |
+| Serial command entry point | ESP32 `src/main_ros.cpp` | v2 CRC/sequence framing, 20 Hz telemetry, 250 ms watchdog; initial physical operation reported; fault/stop acceptance pending |
+| Serial hardware plugin | `ros_ws/src/my_bot/src/esp32_system.cpp` and `serial_transport.cpp` | Implemented; offline transport tests; ROS plugin loading and initial physical operation reported; fault/stop acceptance pending |
 | Wheel commands and odometry | Standard `diff_drive_controller` | Configured for simulation and hardware; measured odometry acceptance pending |
 | Robot description and transforms | `my_bot/description/`, robot_state_publisher | Xacro and preliminary geometry; offline checks |
 | Simulation | Gazebo Harmonic and `gz_ros2_control` | Initial WSL driving/scans demonstrated; repeatable startup and dynamics checks remain |
-| Mapping | SLAM Toolbox via `slam_sim.launch.py` | Simulation configuration and manual map export procedure; runtime/map evidence pending |
-| Physical LiDAR driver | Future ROS integration | A1M8 reported delivered; driver integration pending |
-| Nav2 click-to-go navigation | `my_bot/launch/nav_sim.launch.py` | Implemented for simulation; offline checks passed, Linux/runtime acceptance pending |
+| Mapping | SLAM Toolbox; simulation wrapper `slam_sim.launch.py` and upstream physical launch | Simulation and initial physical teleoperated mapping; manual map save reported |
+| Physical LiDAR driver | Upstream `rplidar_ros` on the Pi | A1M8 via GPIO UART; scan publication and physical mapping demonstrated; full TF/calibration checks pending |
+| Nav2 click-to-go navigation | `my_bot/launch/nav_sim.launch.py`; Nav2/AMCL saved-map workflow | Simulation implementation plus initial physical saved-map navigation demonstration; repeated acceptance pending |
 | Exploration and automatic save | `my_bot/my_bot_exploration`, `explore_sim.launch.py` | Simulation implementation; offline verification, target runtime acceptance pending |
 
 ## Control and data flow
@@ -42,7 +43,8 @@ Simulation uses `/clock`; hardware uses wall time. The two backends are exclusiv
 
 The configured chain is `map -> odom -> base_link -> laser`. SLAM Toolbox owns
 `map -> odom` when the SLAM launch runs; `diff_drive_controller` owns `odom -> base_link`;
-robot_state_publisher owns robot link transforms. No IMU is modeled, and
+AMCL instead owns `map -> odom` in saved-map localization mode; do not run both
+localization sources together. `robot_state_publisher` owns robot link transforms. No IMU is modeled, and
 `robot_localization` is deferred until another useful odometry source exists.
 
 - `platformio.ini`: mutually exclusive firmware source filters. Use explicit environments.
@@ -61,8 +63,10 @@ not physical calibration. Exact units, topics, GPIOs and transport framing are i
 ## Hardware and acceptance
 
 The reported platform uses an ESP32, two encoder gearmotors, two BTS7960 modules,
-a level shifter, battery, wheels, and printed chassis. The Pi 5 kit was ordered and
-the RPLIDAR A1M8 reported delivered; installation and operation remain unverified.
+a level shifter, battery, wheels, and printed chassis. The Pi 5 and RPLIDAR A1M8
+are present in the [September 10 physical demonstration](results/2026-09-10-real-room-mapping-navigation.md),
+which uses tethered power. Physical calibration and repeated integration acceptance
+remain pending.
 The earlier Cytron driver is retired. Independent power isolation, electrical
 ratings, and repeated stop tests remain to be documented.
 
