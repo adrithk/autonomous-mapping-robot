@@ -1,17 +1,17 @@
 # Start here: simulation or real robot
 
-**Next: [SLAM mapping and updated obstacle room](SLAM.md)** — pull/update instructions,
+**Mapping: [SLAM mapping and updated obstacle room](SLAM.md)** — pull/update instructions,
 WASD mapping and manual map saving.
 
 - **Windows/WSL simulation:** follow [WSL_SETUP.md](WSL_SETUP.md).
-- **Pi + ESP32 later:** follow [HARDWARE.md](HARDWARE.md).
+- **Pi + ESP32:** follow [HARDWARE.md](HARDWARE.md).
 - Default `ros2 launch my_bot bringup.launch.py` selects Gazebo.
 - Explicit `mode:=hardware serial_device:=/dev/serial/by-id/YOUR_ESP32` selects real control.
 
 The C++ hardware plugin is included but disabled by default. Offline tests pass;
 the builder has now demonstrated initial WSL simulation and laser visualization.
 See [initial simulation evidence](docs/results/2026-09-07-initial-simulation.md).
-Physical robot validation remains pending.
+Physical mapping and autonomous path planning are shown in the [project demo](../../../README.md#demo).
 
 # Mapping robot description (ROS 2 Jazzy)
 
@@ -20,7 +20,7 @@ Preliminary URDF/Xacro, RViz preview, and estimated Gazebo Harmonic simulation, 
 Simulation uses ros2_control to drive simulated wheels and publish wheel odometry.
 The default simulation does not open an ESP32 connection or run SLAM/Nav2.
 The separate `slam_sim.launch.py` starts SLAM; the opt-in hardware plugin is implemented
-and awaits physical integration. Do not mistake GUI joint positions for encoder feedback.
+and is used in the physical demonstration. Do not mistake GUI joint positions for encoder feedback.
 
 ## Dimensions and frames
 
@@ -44,7 +44,7 @@ The chassis is a thin rectangular approximation of the whole envelope, including
 the front extension, not an exact outline of the circular plate in the photos.
 The caster is a fixed sphere placeholder, not a swivel mechanism model.
 
-For later Nav2 setup, the provisional rectangular footprint relative to base_link
+For Nav2, the provisional rectangular footprint relative to base_link
 is `[[0.18, 0.1075], [0.18, -0.1075], [-0.08, -0.1075], [-0.08, 0.1075]]`.
 Recheck wires, final payload and caster sweep before navigating. URDF collision
 geometry alone does not configure Nav2's footprint.

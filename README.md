@@ -2,15 +2,15 @@
 
 **ROS 2 • SLAM Toolbox • Nav2 • ros2_control • Gazebo • ESP32**
 
-A custom differential-drive robot designed to explore an unfamiliar indoor space and produce a fresh 2D occupancy map. The project connects embedded wheel-speed control with a ROS 2 perception and motion stack on a Raspberry Pi, built around a 3D-printed chassis and a 360-degree LiDAR.
+A custom differential-drive robot that maps indoor rooms through teleoperation and uses autonomous path planning to navigate the saved map. The project connects embedded wheel-speed control with a ROS 2 perception and motion stack on a Raspberry Pi, built around a 3D-printed chassis and a 360-degree LiDAR.
 
-The final system design pairs **SLAM Toolbox** for mapping with **Nav2** for autonomous movement while the map is being built. An exploration component selects reachable viewpoints in known free space beside unmapped regions; Nav2 plans and executes motion to those destinations, while the ESP32 controls the motors using encoder feedback.
+The system pairs **SLAM Toolbox** for mapping with **Nav2** for autonomous path planning and motion control. The operator selects a destination in RViz; Nav2 plans the route and drives the robot, while the ESP32 controls the motors using encoder feedback.
 
 ## Engineering highlights
 
 - **ROS 2 integration:** a Jazzy package brings together the URDF/Xacro robot model, launch files, controller configuration, wheel odometry, TF, simulated LiDAR, and mapping.
 - **SLAM Toolbox:** laser scans and wheel odometry build an occupancy map, with `map → odom → base_link → laser` transforms and map export support. Demonstrations include simulated mapping and teleoperated mapping of a real room.
-- **Nav2 navigation:** the physical demonstration uses a saved map and AMCL localization, with Nav2 planning and driving to operator-selected destinations. Frontier exploration and automatic saving are implemented for simulation; autonomous exploration runtime acceptance remains pending.
+- **Nav2 navigation:** the physical demonstration uses a saved map and AMCL localization, with Nav2 planning and driving to operator-selected destinations.
 - **Custom ros2_control hardware interface:** a C++ `SystemInterface` connects the standard differential-drive controller to the ESP32 through a versioned USB serial protocol, exchanging wheel velocity commands and encoder state.
 - **Embedded motor control:** shared 50 Hz feed-forward/PI wheel controllers, encoder sampling, target ramps, bounded motor outputs, and a 250 ms serial-command watchdog.
 - **Gazebo simulation:** a robot model and obstacle-room world provide a development environment for teleoperation, laser visualization, controller integration, and SLAM before physical integration.
@@ -38,34 +38,36 @@ After mapping, the saved room map was loaded with **AMCL localization**. The ope
 
 Click a preview to open the recording; use **View raw / Download** if GitHub does not offer playback. Both clips retain their full duration and playback speed.
 
-This is **goal-directed autonomous navigation**: the human chooses where to go, and Nav2 handles planning and driving. Automatic frontier selection for exploring an entire unfamiliar room is the next mission-level validation step. The physical run uses tethered power; these clips do not establish complete coverage or repeated navigation reliability.
+This demonstrates **autonomous path planning and navigation**: the operator selects a destination, and Nav2 handles the route and driving. The physical recording uses tethered power.
 
-[September 10, 2026 demonstration record and remaining validation](results/2026-09-10-real-room-mapping-navigation.md).
+[September 10, 2026 demonstration record](results/2026-09-10-real-room-mapping-navigation.md).
 
 ## ROS 2 mapping and autonomous movement
 
 The ROS computer handles the robot model, transforms, sensor processing, mapping, and high-level motion. `diff_drive_controller` converts body-velocity commands into wheel targets and publishes encoder-based odometry. `robot_state_publisher` supplies the robot's link transforms, and SLAM Toolbox combines the laser observations with the motion estimate to maintain the map.
 
-In the final autonomous mapping workflow, frontier exploration selects reachable unexplored regions from the live map. **Nav2 provides the path planning and motion control to reach those regions while SLAM Toolbox continues mapping.** This separates deciding where to explore from executing the movement. The target mission remains fresh-room mapping. Saved-map navigation is an intermediate physical demonstration: AMCL localizes against the saved map, and Nav2 drives to selected goals without rebuilding that map. SLAM and AMCL are separate operating modes.
+For navigation on a saved map, **AMCL estimates the robot's position using LiDAR observations**, and **Nav2 plans and controls movement to the selected goal**. Mapping and saved-map localization are separate operating modes.
 
 ```text
-Final autonomous mapping design
+Mapping
+Keyboard teleoperation → Robot motion
+LiDAR scans + Wheel odometry → SLAM Toolbox → Saved occupancy map
 
-Live map → Frontier exploration → Nav2 → diff_drive_controller
-                                            │
-                                     ros2_control interface
-                                            │ USB serial
-                                            ▼
-                                  ESP32 wheel PI → Motors
-                                            ▲
-                                         Encoders
-
-LiDAR scans + Wheel odometry → SLAM Toolbox → Occupancy map
+Navigation
+Saved map + LiDAR + Wheel odometry → AMCL localization
+RViz destination → Nav2 path planning and control → diff_drive_controller
+                                                          │
+                                                   ros2_control interface
+                                                          │ USB serial
+                                                          ▼
+                                                ESP32 wheel PI → Motors
+                                                          ▲
+                                                       Encoders
 ```
 
 The serial hardware interface checks acknowledgements and telemetry freshness, while the ESP32 enforces its own command timeout independently of ROS. Simulation replaces the physical wheel interface with Gazebo's `gz_ros2_control` backend.
 
-**Implementation status:** firmware, the ROS hardware interface, simulation, SLAM, Nav2, and the simulation explorer with automatic map saving are included. Initial physical teleoperation, LiDAR mapping and saved-map Nav2 navigation are documented in the demonstration above and the dated results. Repeated mission trials, measured physical safety/odometry checks and autonomous exploration acceptance remain pending. [Detailed status](ROADMAP.md).
+**Demonstrated operation:** physical teleoperation, LiDAR mapping, map saving and Nav2 navigation are documented in the photos, recordings and [dated result](results/2026-09-10-real-room-mapping-navigation.md). The repository also includes the Gazebo simulation and robot-specific ROS integration.
 
 ## Simulation code
 
@@ -79,7 +81,7 @@ The serial hardware interface checks acknowledgements and telemetry freshness, w
 
 The [ROS package](ros_ws/src/my_bot/) contains the simulation and robot-specific integration developed for this project. Gazebo Harmonic models the differential-drive chassis in a room with six interior obstacles. Simulated wheel feedback feeds the ROS controllers, and a simulated LiDAR supplies scans for RViz visualization and SLAM Toolbox.
 
-The model uses shared geometry, separate simulation and hardware configurations, and an explicit choice of control backend. The simulation includes estimated masses, inertias, and contact properties; it supports software integration work while physical calibration is completed. A separate mapping launch adds SLAM Toolbox and occupancy-map visualization to the simulation.
+The model uses shared geometry, separate simulation and hardware configurations, and an explicit choice of control backend. The simulation includes estimated masses, inertias, and contact properties; it supports software integration work with explicitly estimated physical parameters. A separate mapping launch adds SLAM Toolbox and occupancy-map visualization to the simulation.
 
 [Robot model](ros_ws/src/my_bot/description/) · [Launch files](ros_ws/src/my_bot/launch/) · [ROS configuration](ros_ws/src/my_bot/config/) · [Simulation world](ros_ws/src/my_bot/worlds/test_room.sdf)
 
@@ -93,9 +95,9 @@ The firmware has separate keyboard and ROS-serial entry points backed by the sam
 
 ## Development and verification
 
-The project was developed through drivetrain bringup, encoder-feedback control, a ROS serial interface, and simulation-based ROS/SLAM integration. Verification includes firmware builds, native controller/protocol tests, emulated serial fault tests, robot-model/configuration checks, and dated bench and simulation observations. Physical integration and autonomous mission acceptance are tracked separately from software tests.
+The project was developed through drivetrain bringup, encoder-feedback control, a ROS serial interface, and simulation-based ROS/SLAM integration. Verification includes firmware builds, native controller/protocol tests, emulated serial fault tests, robot-model/configuration checks, and dated bench and simulation observations. Physical demonstrations and software test results are recorded separately.
 
-[Architecture](ARCHITECTURE.md) · [Recorded results](results/) · [ROS audit](ros_ws/src/my_bot/docs/results/2026-09-07-code-audit.md) · [Development roadmap](ROADMAP.md)
+[Architecture](ARCHITECTURE.md) · [Recorded results](results/) · [ROS audit](ros_ws/src/my_bot/docs/results/2026-09-07-code-audit.md) · [Capability summary](ROADMAP.md)
 
 ## Credits
 

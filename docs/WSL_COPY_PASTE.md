@@ -1,6 +1,6 @@
 # WSL simulation and real-robot startup
 
-Choose **Option A (click-to-go simulation)**, [Option B (real robot)](#option-b-real-robot--raspberry-pi--esp32--rplidar), or [Option C (autonomous exploration)](#option-c-autonomous-closed-room-exploration-simulation).
+Choose **Option A (click-to-go simulation)** or [Option B (real robot)](#option-b-real-robot--raspberry-pi--esp32--rplidar).
 
 ## Option A: simulation
 
@@ -252,8 +252,7 @@ existing differential-drive controller. It turns body commands into wheel speeds
 The navigation manager activates these servers; RViz sends a NavigateToPose goal.
 
 File-by-file details and test criteria: [NAVIGATION.md](../ros_ws/src/my_bot/NAVIGATION.md).
-Frontier exploration, automatic mission completion/save and physical Nav2 testing
-are future steps, not enabled by this launch.
+The operator selects each destination; Nav2 handles autonomous path planning and movement.
 
 ## Transform-related goal aborts
 
@@ -504,7 +503,7 @@ USB disconnect/watchdog/restart behavior and record results as described in
 [HARDWARE.md](../ros_ws/src/my_bot/HARDWARE.md). Normal keyboard stopping is not an
 emergency stop. The Pi's physical controller limits remain lower than simulation.
 
-## B8. Optional next bench test: real RPLIDAR A1M8
+## B8. real RPLIDAR A1M8
 
 Stop WASD while connecting the LiDAR through its supplied USB adapter. This is a
 separate driver, not the simulated scanner. On the Pi, build upstream's driver in
@@ -546,7 +545,7 @@ in another sourced/domain-42 Pi terminal, `ros2 topic hz /scan` measures recepti
 it does not start or publish scans. The real scanner rate is driver/hardware
 controlled, independent of the simulation's 15 Hz setting.
 
-## B9. Before physical mapping and Nav2
+## B9. Physical mapping and Nav2 configuration
 
 The model currently assumes the laser is centered over the axle, 0.10 m above the
 floor. This is a placeholder. Give the final scan-plane height, forward/sideways
@@ -559,130 +558,9 @@ travel/turn accuracy, power stability and watchdog behavior. Synchronize Pi/PC
 system clocks (`timedatectl status` on each; resolve unsynchronized clocks before
 multi-host mapping). Scan dots alone do not establish accurate mapping.
 
-Once those checks pass, the next integration will run SLAM on the Pi with real time
-and the real `/scan`, then open the map RViz view on the PC. Physical Nav2 requires
-hardware-specific velocity settings and runtime acceptance: the current faster
-simulation Nav2 configuration is not a validated real-robot launch. The exploration manager is implemented for simulation; physical integration remains pending. This guide deliberately provides runnable
-hardware/laser bringup now rather than claiming the remaining integration is done.
-
-# Option C: autonomous closed-room exploration (simulation)
-
-Run in **PC Ubuntu/WSL**, not on the physical Pi. This is the new implementation;
-Gazebo/WSL runtime acceptance is still pending. Stop old simulation/Nav2/WASD
-launches first. This version uses walls and closed doors as its boundary.
-
-## C1. Pull, install new dependencies, build and test
-
-```bash
-bash <<'BASH'
-set -e
-source /opt/ros/jazzy/setup.bash
-cd ~/autonomous-mapping-robot
-git pull --ff-only
-cd ros_ws
-rosdep update
-rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
-colcon build --packages-select my_bot --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
-source install/setup.bash
-colcon test --packages-select my_bot --event-handlers console_direct+
-colcon test-result --verbose
-BASH
-```
-
-New dependencies include NumPy/SciPy and the standard ROS Python/message packages.
-Stop if any build/test fails. The ROS adapter tests should run on Jazzy rather than
-skip. This does not flash or modify the ESP32.
-
-## C2. Terminal 1: start autonomous exploration
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
-export ROS_DOMAIN_ID=0
-ros2 launch my_bot explore_sim.launch.py 2>&1 | tee ~/exploration-launch.log
-```
-
-It waits for sensors, SLAM and Nav2, then chooses destinations without clicks.
-RViz shows candidates, selected viewpoint and state. Do not run WASD or issue
-manual goals. Speed and collision settings are the same as click-to-go simulation.
-Use `autostart:=false` if you want to start it explicitly with the service below.
-
-## C3. Terminal 2: status, stop, restart and save retry
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
-export ROS_DOMAIN_ID=0
-ros2 topic echo /exploration/status
-```
-
-Ctrl+C stops the status display only. To request mission stop:
-
-```bash
-ros2 service call /exploration/stop std_srvs/srv/Trigger '{}'
-```
-
-Wait for STOPPED; the response itself only acknowledges the cancellation request.
-Start again on the same map:
-
-```bash
-ros2 service call /exploration/start std_srvs/srv/Trigger '{}'
-```
-
-For a fresh map, Ctrl+C Terminal 1 and relaunch. If saving reports SAVE_FAILED:
-
-```bash
-ros2 service call /exploration/retry_save std_srvs/srv/Trigger '{}'
-```
-
-A permanently unresponsive save request must resolve or the launch must be
-restarted; retries cannot overlap. A stop-confirmation failure shuts the entire
-exploration launch down. Unexpected TF/sensor errors are faults, not completion.
-
-## C4. Saved maps and a second room
-
-After COMPLETE or PARTIAL, the robot has stopped and files are saved to a unique
-mission subdirectory. PARTIAL means frontiers were left unresolved, not that the
-whole room was mapped. Open the output folder from WSL:
-
-```bash
-explorer.exe "$(wslpath -w "$HOME/autonomous-mapping-robot/ros_ws/maps")"
-```
-
-Keep the YAML, PGM and mission.json together. Inspect the final map in RViz and
-check that the saved image/YAML reload before recording acceptance.
-
-For the occluded room, stop Terminal 1 and run there:
-
-```bash
-ros2 launch my_bot explore_sim.launch.py world:="$(ros2 pkg prefix --share my_bot)/worlds/exploration_occluded.sdf" 2>&1 | tee ~/exploration-occluded.log
-```
-
-It has a partition and doorway requiring new viewpoints. Repeat both worlds from
-a fresh launch; record outcome, autonomous goals, collisions (must be none),
-stop/cancel behavior, saved-map path and test results. Also verify the explorer
-reports PARTIAL for unreachable remaining areas rather than declaring completion.
-
-Details and limitations: [exploration guide](../ros_ws/src/my_bot/EXPLORATION.md).
-Physical exploration remains gated on real LiDAR, odometry and Nav2 validation.
-
-To verify a saved YAML/image pair can actually reload, leave exploration stopped
-and run this in an additional sourced, domain-0 WSL terminal. Paste the exact YAML
-path printed in status. The separate topic avoids replacing the live SLAM map:
-
-```bash
-read -r -p 'Saved YAML absolute path: ' SAVED_MAP
-ros2 run nav2_map_server map_server --ros-args -r __node:=saved_map_check -p yaml_filename:="$SAVED_MAP" -p topic_name:=/saved_map_check/map -p use_sim_time:=true
-```
-
-In another sourced terminal:
-
-```bash
-ros2 lifecycle set /saved_map_check configure
-ros2 lifecycle set /saved_map_check activate
-ros2 topic echo /saved_map_check/map --once --field info --qos-durability transient_local
-```
-
-Expect successful lifecycle transitions and map dimensions/resolution. Add a Map
-display for `/saved_map_check/map` in RViz to visually compare, then stop this
-check server with Ctrl+C. It is not needed during regular exploration.
+The physical demonstration uses SLAM Toolbox for teleoperated mapping and map
+saving, then map server and AMCL for saved-map localization with Nav2. Physical
+runs use real time and the hardware LiDAR topic. See the
+[demonstration record](../results/2026-09-10-real-room-mapping-navigation.md)
+for the recorded setup and observations. Simulation velocity settings are not a
+measurement of suitable physical operating speeds.

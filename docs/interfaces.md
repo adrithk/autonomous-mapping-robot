@@ -163,7 +163,7 @@ Configured tree: `map -> odom -> base_link -> laser`. SLAM Toolbox owns
 robot_state_publisher owns robot link transforms. The simulated scanner publishes
 `/scan` in `laser` at 15 Hz; the physical LiDAR driver remains to be integrated.
 SLAM uses simulation time and 0.05 m/cell resolution. Manual map export saves YAML
-and an occupancy image. Autonomous exploration and automatic map saving are planned.
+and an occupancy image. The operator saves the map explicitly.
 
 Offline transport/model checks and initial user-observed simulation are recorded.
 Physical timing, calibrated odometry, SLAM map export and integrated mission
@@ -202,37 +202,3 @@ Navigation planner fallback tolerance is 0.15 m; final approach tolerance remain
 0.08 m relative to the planned endpoint. Costmap publication may use incremental
 `costmap_updates` messages; consumers must subscribe to updates as RViz does.
 Internal costmap update rates and obstacle resolution are unchanged.
-
-## Autonomous exploration interfaces — September 9, 2026
-
-Simulation-first `explore_sim.launch.py` adds `exploration_manager` and a separately
-managed map saver; no ESP32 or body/wheel command interface changes. The explorer
-and map saver run on the same host/filesystem. Existing Nav2 remains sole motion
-owner; manual goals/WASD are not supported concurrently with exploration.
-
-Inputs: `/map` (OccupancyGrid, reliable/transient-local), `/scan` and
-`/diff_drive_controller/odom` (sensor QoS), map/base/laser TF, lifecycle GetState
-services for SLAM/Nav2/map saver. `/global_costmap/get_costmap` supplies a fresh raw
-Nav2 costmap during readiness/selection/settling. Evaluation is limited to 1 Hz.
-Frames default map/odom/base_link; laser frame is taken from the scan header.
-Clearance radius 0.22 m includes the current conservative Nav2 padded circle.
-
-Actions: `/compute_path_to_pose` followed by `/navigate_to_pose`, one outstanding
-lease including acceptance/cancellation. Triggers `/exploration/start`,
-`/exploration/stop`, `/exploration/retry_save` acknowledge requests, not physical
-completion. `/exploration/status` is a transient-local std_msgs/String containing
-JSON state, reason, goal/failure counts and saved_map; `/exploration/markers` is a
-transient-local MarkerArray of viewpoints/current goal/text status for RViz.
-
-Mission states: WAITING, SELECTING, PLANNING, NAVIGATING, SETTLING, STOPPING,
-SAVING, COMPLETE, PARTIAL, STOPPED, FAULTED, SAVE_FAILED. COMPLETE requires no
-meaningful map frontiers; unresolved frontiers produce PARTIAL. No eligibility
-must persist over at least 3 new map updates and 5 seconds. Save follows confirmed
-cancel/terminal action and 1 second of fresh stationary odometry (<0.01 m/s,
-<0.03 rad/s). Timeouts use steady time to remain operative during /clock stalls;
-data timestamp checks use the node's ROS clock. Motion/TF faults are not coverage.
-
-`/exploration_map_saver/save_map` (nav2_msgs/SaveMap) writes trinary PGM/YAML and the
-manager writes mission.json in a unique output-directory child. Save success and
-file presence are checked; errors keep SLAM alive for inspection/retry. Map accuracy,
-physical operation and complete room coverage require runtime evidence.

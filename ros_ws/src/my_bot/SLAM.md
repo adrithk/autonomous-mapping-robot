@@ -70,8 +70,8 @@ saved map; choose another basename for another run. Copy a selected run’s YAML
 
 This saves an occupancy map,
 not SLAM Toolbox's resumable pose graph. Each launch starts fresh mapping.
-Installing nav2_map_server does not start Nav2 navigation. Real LiDAR/SLAM,
-frontier exploration and automatic completion/map saving remain future work.
+Installing nav2_map_server does not start Nav2 navigation. The physical mapping and saved-map navigation demonstration is recorded in the
+[root README](../../../README.md#demo).
 
 ## Validation
 
@@ -87,5 +87,4 @@ References: [SLAM Toolbox Jazzy launch](https://github.com/SteveMacenski/slam_to
 
 For navigation while SLAM maps, use [NAVIGATION.md](NAVIGATION.md) and the
 [updated copy/paste workflow](../../../docs/WSL_COPY_PASTE.md). Stop manual teleop
-and the old launch first; run only `nav_sim.launch.py`. Runtime validation of
-this new navigation mode is pending.
+and the old launch first; run only `nav_sim.launch.py`. The operator selects goals in RViz; Nav2 plans and executes the movement.

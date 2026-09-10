@@ -16,8 +16,7 @@
 
 Document initial manual mapping followed by navigation using the saved map.
 There was no revision-pinned acceptance protocol or instrumented trial series.
-These artifacts establish demonstration evidence, not a pass against the remaining
-hardware, navigation-fault or autonomous exploration acceptance criteria.
+These artifacts document operation; they do not establish quantitative accuracy or reliability.
 
 ## Safety setup and environment
 
@@ -58,14 +57,13 @@ measurements were not recorded in these assets.
 
 **Initial demonstration recorded.** The operator reports successful teleoperated
 mapping and Nav2 navigation. The media visually supports room-map display and
-physical movement. This is goal-directed autonomous navigation: the operator
+physical movement. This is autonomous path planning and navigation: the operator
 selects the destination, while Nav2 plans and executes movement.
 
-No automatic frontier selection, complete-room coverage, collision-free acceptance,
-repeated success rate, measured odometry accuracy or terminal stationary/map-save
-sequence for an autonomous exploration mission is established by these clips.
-Earlier startup/teleop issues in the session are not claimed resolved by a measured
-regression test. Physical fault handling and mission acceptance remain open.
+The clips do not establish complete-room coverage, a repeated success rate or
+measured odometry accuracy. Earlier startup/teleop issues in the session are not
+claimed resolved by a measured regression test. Physical fault handling was not
+measured in these recordings.
 
 ## Artifacts and processing
 
@@ -80,11 +78,3 @@ SDR and its standard audio track retained as AAC; the RViz recording has no audi
 track. The 4K RViz source is reduced to 720 pixels wide. Container metadata and
 auxiliary phone data tracks are omitted. Poster images are extracted video frames.
 Original MOV files are retained outside Git and unchanged.
-
-## Follow-up
-
-Archive the saved YAML/PGM pair and the actual running revisions/configuration.
-Record repeated navigation goals, cancellation, blocked paths, final position
-error, TF alignment and physical stop/watchdog trials. Validate automatic frontier
-exploration and map saving separately; these demonstrations do not close plans
-004, 008 or 009.

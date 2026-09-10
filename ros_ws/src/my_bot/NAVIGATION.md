@@ -1,8 +1,8 @@
 # Nav2 while building a fresh map
 
-Implementation added September 8, 2026. Offline checks pass; Jazzy launch/runtime,
-goal completion and obstacle avoidance still need the PC acceptance run. No physical
-navigation or automatic exploration is claimed.
+This guide describes the simulation launch with live SLAM and Nav2. The physical
+demonstration uses a saved map with AMCL localization and autonomous path planning
+to operator-selected goals. See the [README demo](../../../README.md#demo).
 
 ## Files and command flow
 
