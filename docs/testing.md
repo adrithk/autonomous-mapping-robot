@@ -18,17 +18,9 @@ Run from the repository root:
 pio run -e keyboard -e ros_serial
 ```
 
-The original firmware build passed on 2026-09-01. On 2026-09-04, the wheel-speed controller test and firmware build passed after PID integration. On 2026-09-05, the `keyboard` and `ros_serial` firmware environments built and the wheel-controller and ROS-serial protocol tests passed. The ROS package, launch/configuration files and offline validators now exist under `ros_ws/src/my_bot`; no CI workflow is configured.
-
-### Checks to add with relevant features
-
-- Pure command-decoder and watchdog state-machine tests.
-- Differential-drive kinematic and encoder conversion tests with known vectors.
-- Parser/protocol tests for valid, invalid, truncated, stale, and reordered data.
-- Parameter range and configuration schema checks.
-- ROS node/unit tests and launch tests when packages exist.
-- Planner/mission state-machine tests when custom behavior exists.
-- Static analysis and formatting only when configured intentionally for the project.
+Both firmware entry points share the wheel controller. Native tests cover controller
+logic, encoder arithmetic and serial parsing. The ROS package adds transport,
+model and launch/configuration checks. No CI workflow is configured.
 
 For ROS changes, run the applicable package-scoped or workspace commands:
 
@@ -74,28 +66,28 @@ Every result must include:
 
 Unrecorded physical observations may guide investigation but do not advance the roadmap.
 
-## ROS serial version 2 checks (2026-09-07)
+## Native firmware tests
 
-Both `pio run -e keyboard -e ros_serial` environments passed. Native tests:
+From the repository root, compile and run each standalone test:
 
 ```sh
-clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude test/ros_serial_protocol_test.cpp -o /tmp/ros-protocol-test
-/tmp/ros-protocol-test
-clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude test/wheel_speed_controller_test.cpp -o /tmp/wheel-controller-test
-/tmp/wheel-controller-test
+for name in encoder_count_math ros_serial_protocol wheel_speed_controller; do
+  clang++ -std=c++11 -Wall -Wextra -Werror -Iinclude "test/${name}_test.cpp" -o "/tmp/${name}_test"
+  "/tmp/${name}_test"
+done
 ```
 
 These cover parsing/conversion and controller logic, not live USB timing or ROS.
-No physical or ROS integration result is claimed.
+The [physical demonstration](../results/2026-09-10-real-room-mapping-navigation.md)
+is separate evidence; it does not measure protocol fault-response timing.
 
-## Imported ROS package checks
+## ROS package checks
 
 From `ros_ws/src/my_bot`, follow [VALIDATION.md](../ros_ws/src/my_bot/VALIDATION.md)
-for native serial/conformance checks. Use a Python environment with Xacro and PyYAML:
+for native serial/conformance checks. Use a Python environment with pytest, Xacro, PyYAML, NumPy and SciPy:
 
 ```sh
-python3 test/test_model.py
-python3 test/test_teleop.py
+python3 -m pytest test/ -q
 ```
 
 ROS-dependent compilation and plugin loading require Ubuntu/ROS; native tests

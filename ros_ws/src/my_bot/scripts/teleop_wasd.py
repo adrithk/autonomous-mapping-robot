@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused-terminal WASD teleoperation; stamped ROS commands with a wall-time deadman."""
+"""Stamped WASD commands with hold-to-run or opt-in latched movement."""
 import math
 import os
 import select
@@ -10,20 +10,21 @@ import tty
 
 
 class KeyboardCommand:
-    def __init__(self, speed=0.1, turn=0.5):
+    def __init__(self, speed=0.1, turn=0.5, latched=False):
         if not all(math.isfinite(v) and v > 0 for v in (speed, turn)):
             raise ValueError('speed and turn must be finite and positive')
         self.speed, self.turn = speed, turn
+        self.latched = latched
         self.motion = (0.0, 0.0)
         self.expires = 0.0
 
     def key(self, key, now):
         self.motion = {'w': (self.speed, 0.0), 's': (-self.speed, 0.0),
-                       'a': (0.0, self.turn), 'd': (0.0, -self.turn)}.get(key, (0.0, 0.0))
+                       'a': (0.0, self.turn), 'd': (0.0, -self.turn)}.get(key.lower(), (0.0, 0.0))
         self.expires = now + 0.2
 
     def value(self, now):
-        return self.motion if now < self.expires else (0.0, 0.0)
+        return self.motion if self.latched or now < self.expires else (0.0, 0.0)
 
 
 def main():
@@ -47,14 +48,18 @@ def main():
     frame_id = 'base_link'
     try:
         command = KeyboardCommand(node.declare_parameter('speed', 0.1).value,
-                                  node.declare_parameter('turn', 0.5).value)
+                                  node.declare_parameter('turn', 0.5).value,
+                                  node.declare_parameter('latched', False).value)
         frame_id = node.declare_parameter('frame_id', 'base_link').value
-        print('Hold W/A/S/D (lowercase): forward/left/back/right. Space or X: stop. Ctrl-C: quit.')
-        print('Stops after 0.2 s without key repeats; initial keyboard repeat delay may pause motion.')
+        if command.latched:
+            print('Press W/A/S/D once: forward/left/back/right. X or Space: stop. Ctrl-C: quit.')
+            print('LATCHED: releasing the key does not stop motion. Keep this terminal accessible.')
+        else:
+            print('Hold W/A/S/D: forward/left/back/right. Space or X: stop. Ctrl-C: quit.')
+            print('Stops after 0.2 s without key repeats; initial keyboard repeat delay may pause motion.')
         tty.setcbreak(sys.stdin.fileno())
         while rclpy.ok():
-            # Process /clock even while idle. Expiry uses monotonic time so pausing
-            # Gazebo cannot preserve an old nonzero keyboard command.
+            # Hold-to-run expiry uses monotonic time even if Gazebo pauses.
             rclpy.spin_once(node, timeout_sec=0.0)
             if select.select([sys.stdin], [], [], 0.02)[0]:
                 keys = os.read(sys.stdin.fileno(), 32)

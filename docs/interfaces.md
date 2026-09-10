@@ -9,7 +9,7 @@ Unknown values are deliberately marked `TBD`. Update this file in the same chang
 **Configured rate:** 115200 baud  
 **Framing:** one byte read at a time; no packet framing, checksum, sequence number, acknowledgement, or version  
 **Update behavior:** polled continuously in `loop()`; `w`/`s` ramp up over 300 ms, ramp down during the final 300 ms, and stop after 5000 ms. `a`/`d` ramp up over 100 ms, ramp down during the final 100 ms, and stop after 1000 ms. Explicit, invalid-input, and timeout stops remain immediate.
-**Units:** keyboard commands select fixed signed encoder-count-per-second targets; counts/revolution remains unverified
+**Units:** keyboard commands select fixed signed encoder-count-per-second targets; counts/revolution is preliminary
 
 | Input byte | Left target | Right target | Intended motion |
 |---|---|---|---|
@@ -32,7 +32,7 @@ count. It does not echo every received byte.
 
 - Controller calculations have automated checks and the firmware builds. Raised-wheel forward/reverse tracking passed at +/-3000 counts/s on 2026-09-04; ground-load performance remains unverified.
 - There is no variable-speed command, driver-fault input, or framed/acknowledged transport.
-- Counts/revolution is unverified, so targets and measurements cannot yet be converted reliably to rad/s.
+- ROS uses a preliminary counts/revolution estimate; conversion accuracy remains unverified.
 - Initial gains and left/right electrical polarity require controlled hardware validation.
 - This interface is a bring-up control, not a suitable final ROS transport contract.
 
@@ -54,7 +54,7 @@ count. It does not echo every received byte.
 
 **Owner:** ESP32 firmware
 **Electrical path:** encoder A/B signals -> four-channel 5 V-to-3.3 V level shifter -> ESP32 inputs
-**Acquisition:** interrupt on each A channel; B is read to infer direction. Count differences are converted to counts/s at a nominal 50 Hz using actual elapsed time. Counts are not yet calibrated to wheel position or rad/s.
+**Acquisition:** interrupt on each A channel; B is read to infer direction. Count differences are converted to counts/s at a nominal 50 Hz using actual elapsed time. ROS conversion uses the preliminary 4185 counts/revolution estimate below; measured calibration remains pending.
 
 **Controller:** one controller per wheel using initial gains `Kp=0.020`, `Ki=0.010`, `Kd=0.000`, and feed-forward `0.048 PWM/(count/s)`. Integral magnitude is limited to 4000 count-seconds and output to PWM 200. Straight targets use a 10000 counts/s² slew limit for a 300 ms ramp to 3000 counts/s; turn targets use an 18000 counts/s² limit for a 100 ms ramp to 1800 counts/s. These values are provisional pending physical tuning.
 
@@ -108,17 +108,17 @@ calibration acceptance test. Conversion is `counts/s = rad/s * 4185 / (2*pi)`;
 remain counts/s. Invalid values do not acknowledge a sequence or renew the lease.
 
 The Pi plugin sends wheel rad/s directly in `C,2` frames with CRC and
-new sequence numbers, and convert raw `S,2` feedback using `2*pi / 4185`.
+new sequence numbers, and converts raw `S,2` feedback using `2*pi / 4185`.
 It implements count wraparound, reboot/reset, stale telemetry, reconnect and
-activation/deactivation checks; physical validation remains pending.
+activation/deactivation checks. Initial physical operation is recorded; measured fault-response acceptance remains pending.
 A USB reconnect without an ESP32 reboot retains the last sequence: the host must
 synchronize rather than assume its sequence can restart at zero.
 
 `SEQ`/`ACK` are unsigned 32-bit sequence numbers. Only newer command sequences are
 accepted, using wraparound-safe comparison. A valid zero/zero command and `X` both
 stop immediately. Invalid version, format, checksum, range, overflow, duplicate, or
-older sequence does not refresh the watchdog. USB reconnect does not replay a prior
-command because the ESP32 boots stopped and requires a new valid frame.
+older sequence does not refresh the watchdog. The ESP32 boots stopped. On connection, the host synchronizes its sequence
+and requires an acknowledged stop; it does not replay the previous target.
 
 Status bits are latched until reboot in this first implementation:
 
@@ -131,8 +131,9 @@ Status bits are latched until reboot in this first implementation:
 | 4 | `0x0010` | Wheel target out of range |
 | 5 | `0x0020` | Duplicate or stale sequence |
 
-This protocol builds and has parser/CRC unit tests, but it has not been uploaded or
-bench-tested. The Pi-side plugin is included under `ros_ws/src/my_bot`.
+This protocol has firmware builds and parser/CRC tests. The Pi-side plugin under
+`ros_ws/src/my_bot` was used in the [physical demonstration](../results/2026-09-10-real-room-mapping-navigation.md);
+revision-pinned watchdog, disconnect and fault-response measurements remain pending.
 
 ## ROS 2 interfaces
 
@@ -161,13 +162,15 @@ independent. See [hardware operation](../ros_ws/src/my_bot/HARDWARE.md).
 Configured tree: `map -> odom -> base_link -> laser`. SLAM Toolbox owns
 `map -> odom` in the separate SLAM launch; diff_drive_controller owns `odom -> base_link`;
 robot_state_publisher owns robot link transforms. The simulated scanner publishes
-`/scan` in `laser` at 15 Hz; the physical LiDAR driver remains to be integrated.
-SLAM uses simulation time and 0.05 m/cell resolution. Manual map export saves YAML
+`/scan` in `laser` at 15 Hz. The physical demonstration uses upstream `rplidar_ros`
+with the A1M8 on GPIO UART (`/dev/ttyAMA0`, 115200 baud). Simulation uses `/clock`;
+physical operation uses wall time. Map resolution is 0.05 m/cell. Manual map export saves YAML
 and an occupancy image. The operator saves the map explicitly.
 
-Offline transport/model checks and initial user-observed simulation are recorded.
-Physical timing, calibrated odometry, SLAM map export and integrated mission
-acceptance remain pending; see [testing](testing.md) and [roadmap](../ROADMAP.md).
+Offline transport/model checks, simulated mapping and initial physical mapping,
+map saving and saved-map navigation are recorded. Physical fault timing, calibrated
+odometry and repeated mission acceptance remain pending; see [testing](testing.md)
+and the [capability summary](../ROADMAP.md).
 
 ## Nav2 simulation interfaces — September 8, 2026
 
@@ -186,8 +189,8 @@ command timeout is 0.25 s. These settings are not measured stopping guarantees.
 
 Teleop must be stopped before launching Nav2 because it directly publishes to the
 wheel controller, bypassing this pipeline. Mode switching currently uses separate
-exclusive launch sessions; there is no automatic command multiplexer. Physical
-navigation and autonomous frontier goal selection remain unimplemented/unverified.
+exclusive launch sessions; there is no automatic command multiplexer. Initial physical saved-map navigation is recorded separately. Autonomous frontier
+selection is outside the current demonstrated scope.
 
 ### Navigation TF timing (September 8, preliminary simulation tuning)
 
@@ -202,3 +205,13 @@ Navigation planner fallback tolerance is 0.15 m; final approach tolerance remain
 0.08 m relative to the planned endpoint. Costmap publication may use incremental
 `costmap_updates` messages; consumers must subscribe to updates as RViz does.
 Internal costmap update rates and obstacle resolution are unchanged.
+
+## ROS keyboard mode — September 9, 2026
+
+`teleop_wasd` accepts boolean `latched` (default false). False retains the 0.2 s
+key-repeat expiry. True retains W/A/S/D motion until a replacement direction or
+stop key; X, Space and unrecognized input select zero. Uppercase letters also work.
+Commands remain fresh TwistStamped messages at the existing loop rate. Controller
+and firmware timeouts are unchanged; they detect lost command publication, not
+operator inactivity or an SSH outage while teleop continues publishing. Do not
+run this direct publisher concurrently with Nav2.

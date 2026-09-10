@@ -36,6 +36,22 @@ class TeleopTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.KeyboardCommand(turn=value)
 
+    def test_latched_movement_and_direction_change(self):
+        command = module.KeyboardCommand(latched=True)
+        self.assertEqual(command.value(100), (0, 0))
+        for key, motion in [('w', (0.1, 0)), ('a', (0, 0.5)),
+                            ('s', (-0.1, 0)), ('d', (0, -0.5))]:
+            command.key(key, 1)
+            self.assertEqual(command.value(100), motion)
+
+    def test_latched_stop_and_restart(self):
+        command = module.KeyboardCommand(latched=True)
+        for stop in ['x', 'X', ' ', '?']:
+            command.key('W', 1)
+            self.assertEqual(command.value(100), (0.1, 0))
+            command.key(stop, 101)
+            self.assertEqual(command.value(200), (0, 0))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -51,3 +51,35 @@ remain pending. Exact PC revision and repeatable startup have not been recorded.
 The full ROS package is now in `ros_ws/src/my_bot` in this repository. Earlier
 sibling-package references are historical. Source behavior and pending physical
 acceptance are unchanged. See [current status](../../../ROADMAP.md).
+
+## September 9: latched ROS teleoperation
+
+Bounded follow-up: user requested press-once WASD after hold-to-run only twitched
+over SSH while a timed 0.10 m/s command reportedly moved steadily. Add opt-in
+`latched:=true` to the existing Python teleop. Default hold-to-run, controller and
+ESP32 watchdogs, firmware and speed limits remain unchanged. X/Space/unknown keys
+stop; a direction key replaces the current direction. Releasing a key in latched
+mode does not stop. This does not detect a network outage while the remote process
+remains alive and publishing; keep motor power removal accessible during testing.
+
+Implemented and verified: five offline teleop tests pass, including default expiry,
+latched persistence, direction changes, stop and restart. Local colcon is unavailable;
+Jazzy/SSH latched-mode operation and physical X/Space stopping remain pending.
+See [initial Pi observations](../../../results/2026-09-09-pi-teleop.md).
+
+## September 9: one-revolution bench check
+
+User requested a one-wheel-revolution accuracy check after timed motion worked.
+Added standalone `tools/wheel_revolution_test.py`: targets +2*pi relative position
+on both raised wheels using /joint_states, slows near the endpoint, commands body
+TwistStamped through the existing controller, then sends zero and checks stationary
+feedback. Uses geometry from installed controllers_hardware.yaml. Known geometry
+must match the running controller. No firmware or gains/limits changes.
+
+Guards: other detected command publishers, invalid/stale feedback, initially moving
+wheels, reversed counts, excessive overshoot, 20-second motion limit and 2-second
+stop-confirmation limit. Requires manual tyre marks: encoder-estimated travel alone
+cannot validate the same counts/revolution calibration that defines its endpoint.
+Seven offline target-selection checks passed (start, independent completion, near-
+endpoint slowdown, tolerance, negative direction, overshoot and nonfinite values).
+ROS runtime/physical accuracy and stop timing remain untested for this script.

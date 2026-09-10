@@ -1,3 +1,9 @@
+# Historical package development notes
+
+These dated entries describe earlier development stages, not current status.
+See the [package README](README.md) and [current execution plans](../../../docs/plans/active/)
+for ongoing work.
+
 # Preliminary robot description
 
 Date: 2026-09-06. Scope: a simple Jazzy-targeted kinematic description and preview.

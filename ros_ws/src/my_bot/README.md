@@ -1,26 +1,56 @@
-# Start here: simulation or real robot
+# my_bot — ROS 2 robot integration
 
-**Mapping: [SLAM mapping and updated obstacle room](SLAM.md)** — pull/update instructions,
-WASD mapping and manual map saving.
+ROS 2 Jazzy package for the indoor mapping robot: a custom ESP32 hardware plugin,
+differential-drive control, robot description, Gazebo simulation and SLAM/Nav2 integration.
+See the [project README](../../../README.md) for physical demonstrations.
+The package is also mirrored in [adrithk/my_bot](https://github.com/adrithk/my_bot);
+the commands below use the consolidated repository, which includes the firmware and tools.
 
-- **Windows/WSL simulation:** follow [WSL_SETUP.md](WSL_SETUP.md).
-- **Pi + ESP32:** follow [HARDWARE.md](HARDWARE.md).
-- Default `ros2 launch my_bot bringup.launch.py` selects Gazebo.
-- Explicit `mode:=hardware serial_device:=/dev/serial/by-id/YOUR_ESP32` selects real control.
+## Build
 
-The C++ hardware plugin is included but disabled by default. Offline tests pass;
-the builder has now demonstrated initial WSL simulation and laser visualization.
-See [initial simulation evidence](docs/results/2026-09-07-initial-simulation.md).
-Physical mapping and autonomous path planning are shown in the [project demo](../../../README.md#demo).
+Requires Ubuntu 24.04, ROS 2 Jazzy, `ros-dev-tools` and an initialized `rosdep`.
+Simulation also requires Gazebo Harmonic and a working graphics environment.
+The package declares its ROS and Gazebo dependencies for `rosdep`.
 
-# Mapping robot description (ROS 2 Jazzy)
+```bash
+source /opt/ros/jazzy/setup.bash
+git clone https://github.com/adrithk/autonomous-mapping-robot.git
+cd autonomous-mapping-robot/ros_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
+colcon build --packages-select my_bot --symlink-install
+source install/setup.bash
+colcon test --packages-select my_bot
+colcon test-result --verbose
+```
 
-Preliminary URDF/Xacro, RViz preview, and estimated Gazebo Harmonic simulation, adapted from Josh Newans'
-[my_bot template](https://github.com/joshnewans/my_bot) under Apache-2.0.
-Simulation uses ros2_control to drive simulated wheels and publish wheel odometry.
-The default simulation does not open an ESP32 connection or run SLAM/Nav2.
-The separate `slam_sim.launch.py` starts SLAM; the opt-in hardware plugin is implemented
-and is used in the physical demonstration. Do not mistake GUI joint positions for encoder feedback.
+For an existing checkout, run the dependency/build/test steps from `ros_ws`.
+In each new terminal, source ROS and this workspace's `install/setup.bash`.
+
+| Mode | Command / guide |
+|---|---|
+| Model preview | `ros2 launch my_bot display.launch.py` |
+| Gazebo driving | `ros2 launch my_bot bringup.launch.py` |
+| Simulated mapping | `ros2 launch my_bot slam_sim.launch.py` |
+| Simulated navigation with live SLAM | `ros2 launch my_bot nav_sim.launch.py` |
+| Pi + ESP32 | [Hardware guide](HARDWARE.md) — explicit serial device required |
+
+Run one control mode at a time. The model preview uses synthetic joint states;
+close it before simulation or hardware operation. The [simulation guide](SIMULATION.md)
+covers teleoperation, map saving and navigation.
+
+### ESP32 firmware
+
+Install PlatformIO and build from the repository root. Select the entry point explicitly:
+
+```bash
+pio run -e keyboard
+pio run -e ros_serial
+```
+
+`keyboard` provides direct serial-key control; `ros_serial` speaks the ROS wheel
+protocol. Both share the controller implementation. Add `-t upload` to the chosen
+build command when flashing an attached ESP32.
 
 ## Dimensions and frames
 
@@ -59,41 +89,24 @@ requires positive z when enabling LiDAR. Its driver frame must match `laser`.
 No IMU is modeled. Estimated inertias and mass distribution are provided for
 simulation only; they do not establish real physical behavior.
 
-## Build and preview on Ubuntu 24.04 / ROS 2 Jazzy
 
-Clone the consolidated repository as described in [WSL_SETUP.md](WSL_SETUP.md).
-The package lives at `~/autonomous-mapping-robot/ros_ws/src/my_bot`.
+## Model snapshot
 
-```bash
-source /opt/ros/jazzy/setup.bash
-cd ~/autonomous-mapping-robot/ros_ws
-rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
-colcon build --packages-select my_bot
-source install/setup.bash
-ros2 launch my_bot display.launch.py
-```
-
-RViz and the joint slider window require a graphical desktop, not plain SSH alone.
-Blue marks the front support. Preview uses synthetic joint states; never run the
-GUI publisher alongside real hardware feedback.
-
-For eventual hardware use, run `ros2 launch my_bot rsp.launch.py` and supply
-real `/joint_states` from ros2_control. Confirm or override the provisional LiDAR mount before actual mapping
-using the `include_lidar`, `laser_x`, `laser_y`, `laser_z`, and `laser_yaw` arguments.
-The configured diff_drive_controller owns `odom -> base_link`; SLAM owns `map -> odom`.
-Neither transform is faked by this package.
-
-`description/robot.urdf` is a generated snapshot including the provisional LiDAR for generic URDF viewers.
-After changing dimensions, regenerate it with:
+`description/robot.urdf` is a generated snapshot for generic URDF viewers.
+After changing dimensions, regenerate it from the package directory:
 
 ```bash
-cd ~/autonomous-mapping-robot/ros_ws/src/my_bot
 xacro description/robot.urdf.xacro -o description/robot.urdf
 ```
 
-## Verification status
+Geometry is preliminary; simulation masses, inertias and contact properties are
+estimates. [Hardware inventory](../../../hardware/parts-list.md) records their provenance.
 
-See [VALIDATION.md](VALIDATION.md) and [PLAN.md](PLAN.md). Offline checks are recorded,
-and the builder demonstrated initial WSL driving and laser display on September 7, 2026.
-Revision-pinned Jazzy build/test evidence, repeatable startup, SLAM export, and physical
-validation remain pending. This Mac cannot execute ROS/Gazebo checks.
+## Verification and attribution
+
+[Testing](../../../docs/testing.md) describes the automated checks and remaining
+physical measurements. [Dated results](../../../results/README.md) include initial
+simulation and physical mapping/navigation demonstrations.
+
+Adapted from [Josh Newans’ my_bot template](https://github.com/joshnewans/my_bot)
+under [Apache-2.0](LICENSE.md). Import provenance is in the [workspace README](../../README.md).

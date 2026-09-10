@@ -1,5 +1,8 @@
 # Verification on 2026-09-07
 
+Historical verification snapshot. For current status and commands, see
+[testing](../../../docs/testing.md) and [recorded results](../../../results/README.md).
+
 Environment: macOS, clang++ C++17, local Python with Xacro 2.1.1/PyYAML.
 
 Passed:
@@ -34,8 +37,8 @@ c++ -std=c++17 -Wall -Wextra -Werror -pthread -Iinclude \
 
 Not run: ROS-dependent esp32_system.cpp compilation, pluginlib loading,
 colcon build/test, Gazebo physics/rendering, WSL graphics, real USB/Pi or robot tests.
-No ROS installation, Linux runtime or attached Pi was available. WSL_SETUP.md has
-commands for those remaining checks; physical tests are listed in HARDWARE.md.
+No ROS installation, Linux runtime or attached Pi was available. Current build commands are in [README.md](README.md#build); physical checks are
+listed in [HARDWARE.md](HARDWARE.md).
 
 ## User-observed simulation result — 2026-09-07
 

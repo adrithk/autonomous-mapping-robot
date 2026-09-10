@@ -27,7 +27,7 @@ pluginlib_export_plugin_description_file(hardware_interface esp32_hardware.xml)
 install(TARGETS esp32_hardware esp32_transport
   ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
 install(DIRECTORY include/ DESTINATION include)
-install(FILES EXPLORATION.md HARDWARE.md SIMULATION.md WSL_SETUP.md SLAM.md NAVIGATION.md DESTINATION share/${PROJECT_NAME})
+install(FILES README.md HARDWARE.md SIMULATION.md DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config description launch worlds DESTINATION share/${PROJECT_NAME})
 install(PROGRAMS scripts/explore.py DESTINATION lib/${PROJECT_NAME} RENAME explore)
 install(PROGRAMS scripts/teleop_wasd.py DESTINATION lib/${PROJECT_NAME} RENAME teleop_wasd)

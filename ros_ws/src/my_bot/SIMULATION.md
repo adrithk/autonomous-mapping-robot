@@ -1,109 +1,116 @@
-# Gazebo Harmonic + ROS 2 Jazzy
+# Simulation, mapping and navigation
 
-This is an estimated simulation setup, not a calibrated digital model. It uses
-the same standard diff_drive_controller intended for the Pi; Gazebo supplies the
-wheel interface here. The implemented opt-in Pi SystemInterface speaks our ESP32 serial v2 protocol.
-See HARDWARE.md; physical plugin validation remains pending. Initial simulation
-driving/scans have been observed; repeatable runtime checks remain below.
+Use Ubuntu 24.04, ROS 2 Jazzy and Gazebo Harmonic with a working graphics environment.
+Complete the [build steps](README.md#build), then source ROS and the workspace in
+each terminal. The Pi and ESP32 are not needed for simulation.
 
-## Estimated physics
+## Choose a mode
 
-`description/simulation_parameters.xacro` owns these assumptions:
+Run one of these launches at a time; each starts Gazebo, controllers and RViz.
+Stop the previous launch and teleop before switching modes.
 
-| Parameter | Starting value |
-|---|---:|
-| Total mass | 1.60 kg |
-| Each drive wheel | 0.08 kg |
-| Caster | 0.04 kg |
-| LiDAR | 0.17 kg |
-| Remaining chassis/electronics | 1.23 kg |
-| Body inertia envelope height | 0.08 m |
-| Body COM above plate center | 0.03 m |
-| Wheel friction coefficient | 0.8 |
-| Caster sphere friction coefficient | 0.001 |
-| Wheel torque / velocity limits | 0.3 N m / 12.5 rad/s |
-| LiDAR rate / samples per scan | 10 Hz / 360 |
-| LiDAR range / Gaussian range noise stddev | 0.15–6 m / 0.01 m |
+| Mode | Command |
+|---|---|
+| Drive with laser visualization | `ros2 launch my_bot bringup.launch.py` |
+| Build a map while driving | `ros2 launch my_bot slam_sim.launch.py` |
+| Navigate while SLAM builds the map | `ros2 launch my_bot nav_sim.launch.py` |
 
-Box, cylinder and sphere inertia formulas produce positive inertias for these
-assumptions. With LiDAR disabled its allocated mass returns to the chassis.
-The caster is a low-friction sphere, not a simulated swivel assembly. LiDAR
-scan properties are convenient test settings, not verified A1M8 specifications.
-The visual LiDAR housing sits just below the scan plane to avoid self-obstruction.
-Velocity control does not reproduce the ESP32 PI loop, serial timing, or verified
-motor torque. Do not use these simulation values to tune real motor gains.
+The local world contains four boundary walls and six interior box obstacles.
+Gazebo supplies wheel feedback and simulated LiDAR; `diff_drive_controller`
+publishes odometry. `/clock` and `/scan` are bridged to ROS. All simulated nodes
+use `use_sim_time:=true`.
 
-`config/controllers.yaml` uses the preliminary builder-reported wheel geometry and conservative
-simulation limits: 0.15 m/s translation, 0.75 rad/s rotation and a 0.25 s command
-timeout. These are not calibrated real-robot limits. Geometry consistency is
-checked against Xacro by the tests; update both when geometry changes.
+## Drive and map
 
-## Run on Ubuntu 24.04 with Jazzy (including WSL2 with working WSLg graphics)
-
-Gazebo runs on the PC; the Pi is not required for simulation. Follow [WSL_SETUP.md](WSL_SETUP.md) to clone the consolidated repository first. In the Ubuntu terminal:
+With the driving or mapping launch running, use a second sourced terminal:
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-sudo apt update
-sudo apt install ros-jazzy-ros-gz ros-jazzy-gz-ros2-control ros-jazzy-ros2-controllers
-cd ~/autonomous-mapping-robot/ros_ws
-rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
-colcon build --packages-select my_bot
-colcon test --packages-select my_bot
-colcon test-result --verbose
-source install/setup.bash
-ros2 launch my_bot bringup.launch.py
-```
-
-The world is a local 3 m room (2.9 m clear interior between 0.1 m thick walls) with six interior box obstacles and requires no remote model
-downloads. The launch starts Gazebo running, publishes the description, spawns
-the model, starts the joint-state broadcaster and then the drive controller.
-It bridges only `/clock` and `/scan`. ros2_control owns joint states and odometry;
-there is no second Gazebo DiffDrive plugin or fake joint-state publisher.
-
-In a second Ubuntu terminal:
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source ~/autonomous-mapping-robot/ros_ws/install/setup.bash
 ros2 run my_bot teleop_wasd --ros-args \
   -p use_sim_time:=true -p frame_id:=base_link -p speed:=0.1 -p turn:=0.5 \
   -r cmd_vel:=/diff_drive_controller/cmd_vel
 ```
 
-Keep the keyboard terminal focused. Hold w/a/s/d to drive; space or x stops.
-The teleop sends zero after 0.2 s without key repeats; controller timeout is 0.25 s. RViz uses odom as its fixed frame.
+Hold W/S to drive forward/reverse and A/D to turn. Space or X stops; Ctrl+C exits.
+The default teleop expires after 0.2 s without a key repeat. Keep the terminal focused.
+Drive slowly around obstacles, then return near the starting position to inspect
+map consistency. RViz shows free, occupied and unknown space with red laser returns.
 
-## Repeatable runtime acceptance checks
+Useful checks in another sourced terminal:
 
-1. Robot settles upright without sinking, bouncing or drifting.
-2. `ros2 control list_controllers` shows both controllers active.
-3. Forward commands move toward the caster; positive angular.z turns left.
-4. `ros2 topic hz /scan` is about 10 Hz and scan frame is `laser`; room walls
-   appear at plausible distances in RViz.
-5. Joint states and `/diff_drive_controller/odom` update; exactly one publisher
-   owns odom -> base_link. Ending command publication stops requested wheel motion.
-6. Drive a slow loop and check scan/odometry consistency before adding SLAM.
+```bash
+ros2 control list_controllers
+ros2 topic hz /scan
+ros2 topic echo /diff_drive_controller/odom --once
+```
 
-GPU LiDAR needs working rendering even without the Gazebo GUI. If WSL graphics
-fails, first resolve WSLg/GPU support; do not interpret a missing scan as a real
-LiDAR failure. `rviz:=false` disables RViz only, not Gazebo's rendering requirements.
+Both controllers should be active, scans should use frame `laser` at the configured
+15 Hz, and odometry should change while driving. During mapping, also check:
 
-## Real robot later
+```bash
+ros2 lifecycle get /slam_toolbox
+ros2 topic echo /map --once --field info
+ros2 run tf2_ros tf2_echo map odom
+```
 
-Stop simulation, then choose `mode:=hardware` and explicitly supply the ESP32
-serial device. See [HARDWARE.md](HARDWARE.md) for exact commands and bench checks.
-`rsp.launch.py` alone remains a description-only launch. Hardware and simulation
-must not run simultaneously in the same ROS domain.
+SLAM should be active with a nonempty map and a `map → odom` transform.
+`diff_drive_controller` owns `odom → base_link`; `robot_state_publisher` owns the
+robot link transforms. Persistent missing-map or TF errors need investigation.
 
-References: [Jazzy gz_ros2_control](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html),
-[Jazzy diff_drive_controller](https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html),
-[Harmonic sensors](https://gazebosim.org/docs/harmonic/sensors/).
+## Save a map
 
-## User-observed simulation result — 2026-09-07
+While SLAM is running, choose a new basename for each run:
 
-Recorded [initial simulation implementation](docs/results/2026-09-07-initial-simulation.md) with the builder's original photo. Gazebo launch, WASD driving,
-10 Hz simulated scans and RViz display were reported working. The screenshot
-confirms visible scan returns with RViz status Ok. This supersedes earlier pending
-statements for the initial simulation smoke test only; physical validation,
-repeatable startup, odometry accuracy and SLAM remain pending.
+```bash
+mkdir -p ~/robot_maps
+ros2 run nav2_map_server map_saver_cli -f ~/robot_maps/room_01 --ros-args \
+  -p use_sim_time:=true -p map_subscribe_transient_local:=true -p save_map_timeout:=10.0
+```
+
+Keep the YAML and its referenced occupancy image together. Reusing the basename
+replaces the saved files. This exports an occupancy map; it does not save SLAM
+Toolbox's resumable pose graph. Record selected runs under [results](../../../results/README.md).
+
+## Nav2 goals
+
+Stop teleop and the old launch, then start `nav_sim.launch.py`. Wait for the map
+and Nav2 activation. Select **Nav2 Goal** in RViz, click in known free space, and
+drag to choose the final heading. Use **Cancel** in Navigation 2 to cancel a goal.
+Live SLAM estimates the pose in this mode, so no AMCL initial pose is needed.
+
+NavFn plans a path, DWB tracks it, and velocity smoothing and collision monitoring
+feed stamped commands to `/diff_drive_controller/cmd_vel`. Teleop publishes directly
+to that controller; do not run it concurrently with Nav2.
+
+| Setting | Configured value |
+|---|---|
+| Navigation speed limits | 0.20 m/s, 0.6 rad/s |
+| Collision radius / padding | 0.215 m / 0.005 m |
+| Wheel command timeout | 0.25 s |
+| Collision-monitor scan timeout | 0.5 s |
+
+These are simulation settings, not measured physical stopping guarantees.
+Goals must lie in observed free space. The physical demonstration uses a saved
+map with AMCL instead; see the [hardware guide](HARDWARE.md#mapping-and-navigation).
+
+If only RViz is missing, open the UI without starting another simulation:
+
+```bash
+ros2 launch my_bot rviz_navigation.launch.py
+```
+
+## Model assumptions and verification
+
+[simulation_parameters.xacro](description/simulation_parameters.xacro) centralizes
+estimated mass (1.6 kg), inertias, friction and scanner properties. The scanner uses
+360 samples at 15 Hz over 0.15–6 m with 0.01 m simulated range noise. Velocity control
+does not reproduce the ESP32 PI loop or USB timing. GPU LiDAR needs a rendering
+context even when RViz is disabled.
+
+Initial driving and [interactive SLAM](../../../results/2026-09-08-simulated-lidar-slam.md)
+are recorded. Repeatable Nav2 acceptance should cover a nearby goal, a path around
+an obstacle, cancellation, an unreachable goal and a fresh restart. Record source
+revision, configuration and outcomes; offline checks do not establish obstacle avoidance.
+
+Detailed contracts and provisional TF timing settings are in
+[interfaces](../../../docs/interfaces.md); earlier tuning history is retained in
+[plan 008](../../../docs/plans/active/008-nav2-simulation.md).

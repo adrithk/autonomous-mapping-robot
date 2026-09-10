@@ -1,104 +1,88 @@
 # Autonomous Indoor Mapping Robot
 
-**ROS 2 • SLAM Toolbox • Nav2 • ros2_control • Gazebo • ESP32**
+**ROS 2 Jazzy • SLAM Toolbox • Nav2 • ros2_control • Gazebo • ESP32**
 
-A custom differential-drive robot that maps indoor rooms through teleoperation and uses autonomous path planning to navigate the saved map. The project connects embedded wheel-speed control with a ROS 2 perception and motion stack on a Raspberry Pi, built around a 3D-printed chassis and a 360-degree LiDAR.
+A custom differential-drive robot that builds maps of indoor rooms and navigates to destinations selected in RViz. Built around a 3D-printed chassis, Raspberry Pi 5 and 360-degree LiDAR, it connects embedded wheel-speed control with a complete ROS 2 mapping and navigation stack.
 
-The system pairs **SLAM Toolbox** for mapping with **Nav2** for autonomous path planning and motion control. The operator selects a destination in RViz; Nav2 plans the route and drives the robot, while the ESP32 controls the motors using encoder feedback.
-
-## Engineering highlights
-
-- **ROS 2 integration:** a Jazzy package brings together the URDF/Xacro robot model, launch files, controller configuration, wheel odometry, TF, simulated LiDAR, and mapping.
-- **SLAM Toolbox:** laser scans and wheel odometry build an occupancy map, with `map → odom → base_link → laser` transforms and map export support. Demonstrations include simulated mapping and teleoperated mapping of a real room.
-- **Nav2 navigation:** the physical demonstration uses a saved map and AMCL localization, with Nav2 planning and driving to operator-selected destinations.
-- **Custom ros2_control hardware interface:** a C++ `SystemInterface` connects the standard differential-drive controller to the ESP32 through a versioned USB serial protocol, exchanging wheel velocity commands and encoder state.
-- **Embedded motor control:** shared 50 Hz feed-forward/PI wheel controllers, encoder sampling, target ramps, bounded motor outputs, and a 250 ms serial-command watchdog.
-- **Gazebo simulation:** a robot model and obstacle-room world provide a development environment for teleoperation, laser visualization, controller integration, and SLAM before physical integration.
+Mapping uses keyboard teleoperation with **SLAM Toolbox**. Once the map is saved, **AMCL** localizes the robot and **Nav2** plans and drives the route to each selected goal.
 
 ## Demo
 
-### Real-room mapping through teleoperation
+### Real-room mapping
 
-The robot was driven manually through the room while its RPLIDAR A1M8 and encoder-based odometry supplied SLAM Toolbox with observations. RViz displayed the resulting occupancy map, which was saved for the navigation demonstration.
-
-| Physical robot in the room | SLAM map displayed in RViz |
+| Physical robot | Room map in RViz |
 |:---:|:---:|
-| <img src="media/real-room/teleoperation-robot.jpg" alt="Physical robot with mounted LiDAR in the room used for teleoperated mapping" width="380"> | <img src="media/real-room/teleoperation-slam-map.jpg" alt="RViz showing the room occupancy map, robot and laser returns" width="380"> |
+| <img src="media/real-room/teleoperation-robot.jpg" alt="Custom robot with mounted LiDAR during room mapping" width="380"> | <img src="media/real-room/teleoperation-slam-map.jpg" alt="Room occupancy map and LiDAR returns displayed in RViz" width="380"> |
 
-The map shows observed free space in light gray, occupied boundaries in black, and unknown space in gray-green. Red points show LiDAR returns. These photographs document **manual driving with automatic map building**.
+The robot was driven through the room while LiDAR scans and encoder-based odometry supplied SLAM Toolbox with observations. The resulting occupancy map was saved for navigation.
 
 ### Nav2 navigation on the saved map
 
-After mapping, the saved room map was loaded with **AMCL localization**. The operator selects a destination in RViz; **Nav2 computes a path and controls the robot's movement toward it**. These recordings show the physical robot and the RViz view of its changing position on the map.
-
-| Robot moving through the room · 49 s | RViz navigation view · 51 s |
+| Robot navigating · 49 s | RViz navigation view · 51 s |
 |:---:|:---:|
-| [![Watch the physical Nav2 navigation recording](media/real-room/nav2-robot-poster.jpg)](media/real-room/nav2-robot.mp4) | [![Watch the RViz navigation recording](media/real-room/nav2-rviz-poster.jpg)](media/real-room/nav2-rviz.mp4) |
-| [Watch / download MP4](media/real-room/nav2-robot.mp4) | [Watch / download MP4](media/real-room/nav2-rviz.mp4) |
+| [![Watch the physical navigation recording](media/real-room/nav2-robot-poster.jpg)](media/real-room/nav2-robot.mp4) | [![Watch the RViz navigation recording](media/real-room/nav2-rviz-poster.jpg)](media/real-room/nav2-rviz.mp4) |
 
-Click a preview to open the recording; use **View raw / Download** if GitHub does not offer playback. Both clips retain their full duration and playback speed.
+Click a preview to watch or download the full-speed recording. On GitHub, use **View raw / Download** if playback is unavailable.
 
-This demonstrates **autonomous path planning and navigation**: the operator selects a destination, and Nav2 handles the route and driving. The physical recording uses tethered power.
+These initial demonstrations use operator-selected goals and tethered power. Setup, observations and measurement limits are documented in the [September 10 demonstration record](results/2026-09-10-real-room-mapping-navigation.md).
 
-[September 10, 2026 demonstration record](results/2026-09-10-real-room-mapping-navigation.md).
+## Engineering highlights
 
-## ROS 2 mapping and autonomous movement
+- **Custom ROS hardware interface:** a C++ `ros2_control` plugin connects the standard differential-drive controller to the ESP32. The versioned serial protocol carries wheel commands and encoder feedback, with CRC checks, sequence tracking and an acknowledged stop at startup.
+- **Embedded feedback control:** shared 50 Hz feed-forward/PI wheel controllers handle encoder sampling, command ramps and bounded motor outputs. An independent 250 ms watchdog stops commands that expire.
+- **Mapping and navigation integration:** robot-specific Xacro, launch files, controller settings and TF connect wheel odometry and LiDAR to SLAM Toolbox, AMCL and Nav2.
+- **Simulation and mechanical design:** Gazebo Harmonic provides a differential-drive model, simulated LiDAR and an obstacle room for integration testing. [STEP and STL files](hardware/cad/README.md) include the chassis, caster mount and LiDAR holder.
 
-The ROS computer handles the robot model, transforms, sensor processing, mapping, and high-level motion. `diff_drive_controller` converts body-velocity commands into wheel targets and publishes encoder-based odometry. `robot_state_publisher` supplies the robot's link transforms, and SLAM Toolbox combines the laser observations with the motion estimate to maintain the map.
+## How it works
 
-For navigation on a saved map, **AMCL estimates the robot's position using LiDAR observations**, and **Nav2 plans and controls movement to the selected goal**. Mapping and saved-map localization are separate operating modes.
+The Raspberry Pi handles perception, localization and route planning. The ESP32 handles motor outputs and wheel-speed control, keeping command-loss handling independent of the ROS computer.
 
 ```text
-Mapping
-Keyboard teleoperation → Robot motion
-LiDAR scans + Wheel odometry → SLAM Toolbox → Saved occupancy map
+Mapping:     LiDAR + wheel odometry → SLAM Toolbox → Saved map
+Navigation:  Saved map + LiDAR + wheel odometry → AMCL localization
 
-Navigation
-Saved map + LiDAR + Wheel odometry → AMCL localization
-RViz destination → Nav2 path planning and control → diff_drive_controller
-                                                          │
-                                                   ros2_control interface
-                                                          │ USB serial
-                                                          ▼
+RViz goal → Nav2 → diff_drive_controller → Custom ros2_control plugin
+                                                      │ USB serial
+                                                      ▼
                                                 ESP32 wheel PI → Motors
-                                                          ▲
-                                                       Encoders
+                                                      ▲
+                                                   Encoders
 ```
 
-The serial hardware interface checks acknowledgements and telemetry freshness, while the ESP32 enforces its own command timeout independently of ROS. Simulation replaces the physical wheel interface with Gazebo's `gz_ros2_control` backend.
+Mapping and saved-map localization run as separate modes. In simulation, Gazebo replaces the serial hardware interface while retaining the ROS controllers and robot model.
 
-**Demonstrated operation:** physical teleoperation, LiDAR mapping, map saving and Nav2 navigation are documented in the photos, recordings and [dated result](results/2026-09-10-real-room-mapping-navigation.md). The repository also includes the Gazebo simulation and robot-specific ROS integration.
+[System architecture](ARCHITECTURE.md) · [Serial protocol and interfaces](docs/interfaces.md) · [Hardware inventory](hardware/parts-list.md)
 
-## Simulation code
+## Simulation
 
-### Initial simulated LiDAR SLAM
+![Gazebo obstacle room and the SLAM occupancy map in RViz](results/2026-09-08-simulated-lidar-slam/simulated-lidar-slam.png)
 
-![Gazebo simulation on the left and the initial LiDAR SLAM occupancy map in RViz on the right](results/2026-09-08-simulated-lidar-slam/simulated-lidar-slam.png)
+Gazebo models the robot in a room with six interior obstacles; RViz displays the map built from simulated laser scans. The simulation supports teleoperation, SLAM and Nav2 integration using estimated physical parameters. [Recorded simulation result](results/2026-09-08-simulated-lidar-slam.md).
 
-**Left:** Gazebo shows the simulated robot and obstacles. **Right:** RViz displays the initial 2D occupancy map built with SLAM Toolbox from simulated LiDAR scans. Gray-green regions are unknown/unmapped, light gray regions are observed free space, and black cells mark detected occupied surfaces such as walls and obstacles. Red points overlay the current LiDAR returns. Areas hidden behind obstacles remain unmapped until observed from another viewpoint.
+To try it on Ubuntu 24.04 with ROS 2 Jazzy and Gazebo Harmonic, follow the [build instructions](ros_ws/src/my_bot/README.md#build), then launch:
 
-[Initial implementation screenshot, supplied September 8, 2026](results/2026-09-08-simulated-lidar-slam.md).
+```bash
+ros2 launch my_bot slam_sim.launch.py
+```
 
-The [ROS package](ros_ws/src/my_bot/) contains the simulation and robot-specific integration developed for this project. Gazebo Harmonic models the differential-drive chassis in a room with six interior obstacles. Simulated wheel feedback feeds the ROS controllers, and a simulated LiDAR supplies scans for RViz visualization and SLAM Toolbox.
+The [simulation guide](ros_ws/src/my_bot/SIMULATION.md) covers driving, map export and Nav2 goals. For the assembled robot, use the [hardware guide](ros_ws/src/my_bot/HARDWARE.md).
 
-The model uses shared geometry, separate simulation and hardware configurations, and an explicit choice of control backend. The simulation includes estimated masses, inertias, and contact properties; it supports software integration work with explicitly estimated physical parameters. A separate mapping launch adds SLAM Toolbox and occupancy-map visualization to the simulation.
+## Verification
 
-[Robot model](ros_ws/src/my_bot/description/) · [Launch files](ros_ws/src/my_bot/launch/) · [ROS configuration](ros_ws/src/my_bot/config/) · [Simulation world](ros_ws/src/my_bot/worlds/test_room.sdf)
+Automated checks cover wheel-control logic, protocol parsing, encoder rollover, host/firmware compatibility, emulated serial faults and ROS model/configuration consistency. Dated records also document raised-wheel tracking, simulated mapping and the physical room demonstration.
 
-## Hardware and embedded software
+The demonstrations establish initial operation; map accuracy, navigation repeatability and physical stop timing have not been quantified. See [recorded results](results/README.md) and [verification instructions](docs/testing.md).
 
-The drivetrain combines two encoder gearmotors, BTS7960 motor drivers, an ESP32, and a custom printed chassis. The ROS platform is designed around a Raspberry Pi 5 and RPLIDAR A1M8. The ESP32 owns encoder acquisition, wheel feedback control, motor outputs, and immediate command-loss handling; the Pi owns the ROS stack.
+## Repository
 
-The firmware has separate keyboard and ROS-serial entry points backed by the same wheel-control implementation. The serial protocol includes checksums, sequence tracking, wheel commands, and state telemetry. Native tests cover controller behavior, parser boundaries, encoder rollover, and host/firmware compatibility.
-
-[Firmware](src/) · [ROS hardware interface](ros_ws/src/my_bot/src/) · [Parts and geometry](hardware/parts-list.md) · [Protocol and interfaces](docs/interfaces.md)
-
-## Development and verification
-
-The project was developed through drivetrain bringup, encoder-feedback control, a ROS serial interface, and simulation-based ROS/SLAM integration. Verification includes firmware builds, native controller/protocol tests, emulated serial fault tests, robot-model/configuration checks, and dated bench and simulation observations. Physical demonstrations and software test results are recorded separately.
-
-[Architecture](ARCHITECTURE.md) · [Recorded results](results/) · [ROS audit](ros_ws/src/my_bot/docs/results/2026-09-07-code-audit.md) · [Capability summary](ROADMAP.md)
+| Location | Contents |
+|---|---|
+| [src/](src/) and [include/](include/) | ESP32 firmware and shared control/protocol logic |
+| [ros_ws/src/my_bot/](ros_ws/src/my_bot/) | ROS hardware plugin, robot model, launch files, configuration and simulation |
+| [hardware/](hardware/) | CAD files, component inventory and preliminary geometry |
+| [test/](test/) and [ROS tests](ros_ws/src/my_bot/test/) | Firmware logic, serial transport and ROS integration checks |
+| [results/](results/README.md) | Dated demonstrations and test evidence |
 
 ## Credits
 
-Custom work includes the ESP32 firmware, serial transport and ROS hardware plugin, and robot-specific model, simulation, and mapping integration. The robot description began with [Josh Newans’ my_bot template](https://github.com/joshnewans/my_bot), whose [Apache-2.0 license](ros_ws/src/my_bot/LICENSE.md) is retained. ROS 2, ros2_control, Gazebo, SLAM Toolbox, and Nav2 provide the underlying robotics frameworks.
+Custom work includes the ESP32 firmware, serial transport and ROS hardware plugin, and robot-specific model, simulation and mapping integration. The robot description began with [Josh Newans’ my_bot template](https://github.com/joshnewans/my_bot), whose [Apache-2.0 license](ros_ws/src/my_bot/LICENSE.md) is retained. ROS 2, ros2_control, Gazebo, SLAM Toolbox and Nav2 provide the underlying robotics frameworks.
