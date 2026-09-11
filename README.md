@@ -49,6 +49,26 @@ RViz goal → Nav2 → diff_drive_controller → Custom ros2_control plugin
                                                    Encoders
 ```
 
+### SLAM: turning laser scans into a room map
+
+**Simultaneous Localization and Mapping (SLAM)** solves two connected problems: building a map of an unfamiliar space and estimating the robot's position within it. The RPLIDAR supplies a 360-degree slice of surrounding surfaces, while wheel encoders estimate how far the robot has moved between scans.
+
+[SLAM Toolbox](https://github.com/SteveMacenski/slam_toolbox/tree/jazzy) uses **scan matching** to align overlapping laser observations and refine that motion estimate. It links successive robot poses into a **pose graph**. When a previously visited area is recognized, **loop closure** adds a constraint that lets the optimizer correct accumulated drift across the trajectory. The included [SLAM configuration](ros_ws/src/my_bot/config/slam.yaml) enables scan matching and loop closure with a Ceres solver.
+
+The output is an **occupancy grid**: a spatial representation of free, occupied and unobserved areas. This project uses 5 cm map cells, displays the map and live laser returns in RViz, and exports the occupancy image with its scale and origin in a YAML file. Mapping is teleoperated; the saved map becomes the reference for autonomous navigation.
+
+### Nav2: turning a destination into motion
+
+For the physical saved-map workflow, **Adaptive Monte Carlo Localization (AMCL)** estimates the robot's position and heading. Its particle filter maintains candidate poses, predicts their movement from odometry, and weighs them against how well the current laser scan agrees with the map. This keeps navigation tied to observations of the room as the wheels turn. [AMCL documentation](https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/others/configuring_amcl/).
+
+The operator then selects a destination and final heading in RViz. Nav2 separates finding a route from deciding how to drive the next part of it. The repository's [simulation navigation configuration](ros_ws/src/my_bot/config/nav2.yaml) makes that pipeline explicit:
+
+- **Global planning:** NavFn uses Dijkstra search to find a route through known free space. Costmaps combine the map with laser observations; obstacle inflation assigns higher costs near walls and furniture to encourage clearance.
+- **Local trajectory control:** DWB evaluates candidate forward and turning motions against obstacle costs, path alignment and progress toward the goal. The controller is configured to update at 20 Hz, repeatedly choosing the next velocity command as the robot moves.
+- **Motion execution:** velocity smoothing limits acceleration, and a collision monitor checks laser observations before commands reach the drivetrain. The differential-drive controller converts body motion into wheel targets, which the ESP32 tracks using encoder feedback.
+
+[NavFn](https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/planners_plugins/configuring_navfn/) and [DWB](https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/controller_plugins/dwb_controller/) provide the planning and control algorithms; this project's integration connects them to the custom robot. The physical recordings demonstrate saved-map navigation with AMCL, while the included simulation launch runs Nav2 alongside live SLAM. Exact physical-run planner settings and measured obstacle-response performance were not captured.
+
 Mapping and saved-map localization run as separate modes. In simulation, Gazebo replaces the serial hardware interface while retaining the ROS controllers and robot model.
 
 [System architecture](ARCHITECTURE.md) · [Serial protocol and interfaces](docs/interfaces.md) · [Hardware inventory](hardware/parts-list.md)

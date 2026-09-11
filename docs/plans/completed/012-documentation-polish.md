@@ -59,3 +59,15 @@ with Xacro, PyYAML, NumPy and SciPy. No ROS Jazzy/colcon or attached robot.
 
 ROS build/plugin loading, Gazebo runtime and physical verification were not run.
 These remain separate from this documentation and repository-sync acceptance.
+
+## README follow-up — September 10, 2026
+
+User requested more depth on SLAM and Nav2 while retaining the polished layout.
+Expanded the existing system section to explain scan matching, pose graphs, loop
+closure, occupancy grids, AMCL, global/local planning and command execution.
+Checked algorithm descriptions against upstream SLAM Toolbox/Nav2 documentation
+and project settings against slam.yaml, nav2.yaml and navigation.launch.py.
+Simulation-specific settings remain clearly scoped; no new physical acceptance
+or custom-algorithm claims. Documentation links/anchors and diff whitespace
+checks passed. No executable changes or new hardware results; prior build/test
+results are unchanged.
