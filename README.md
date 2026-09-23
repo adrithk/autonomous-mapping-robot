@@ -87,6 +87,16 @@ ros2 launch my_bot slam_sim.launch.py
 
 The [simulation guide](ros_ws/src/my_bot/SIMULATION.md) covers driving, map export and Nav2 goals. For the assembled robot, use the [hardware guide](ros_ws/src/my_bot/HARDWARE.md).
 
+## Autonomous exploration
+
+The robot's exploration implementation uses **frontier-based exploration** to choose where to go while building a map. SLAM Toolbox combines LiDAR scans and wheel odometry to update the map, and a custom ROS 2 exploration node identifies boundaries between known free space and unexplored areas.
+
+The node selects nearby viewpoints with sufficient clearance, prioritizing larger frontiers and shorter travel distances. Nav2 checks whether a path is available and navigates to the selected destination. As new areas become visible, the map updates and the process repeats.
+
+The exploration logic distinguishes between having no meaningful frontiers remaining and having frontiers that cannot currently be reached. It includes bounded retries, monitoring of sensor and navigation health, and automatic map saving after confirming the robot has stopped.
+
+The included [exploration launch](ros_ws/src/my_bot/launch/explore_sim.launch.py) targets simulation. The repository's [recorded exploration verification](results/2026-09-09-exploration-offline.md) covers offline tests; integrated exploration and physical-run results remain to be documented.
+
 ## Verification
 
 Automated checks cover wheel-control logic, protocol parsing, encoder rollover, host/firmware compatibility, emulated serial faults and ROS model/configuration consistency. Dated records also document raised-wheel tracking, simulated mapping and the physical room demonstration.
